@@ -93,7 +93,7 @@ class TSupportedObjType(Enum):
 
 AppName = "TSMasterCDemo".encode("utf8")
 dll = WinDLL(r".\TSMaster.dll")
-
+dll_uds = CDLL(r".\UDS_DLL.dll")
 
 # Struct
 class TLIBTSMapping(Structure):
@@ -955,15 +955,15 @@ def tstp_can_send_request(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, A
 
 
 def tstp_can_request_and_get_response(pDiagModuleIndex: c_int64, AReqDataArray: bytearray, AReqDataSize: c_int32,
-                                      AResponseDataArray: bytearray, AResponseDataSize: c_int32, ATimeOutMs: c_int32):
+                                  AResponseDataArray: bytearray, AResponseDataSize: c_int32, ATimeOutMs: c_int32):
     AReqdata = POINTER(c_byte * len(AReqDataArray))((c_byte * len(AReqDataArray))(*AReqDataArray))
     AResdata = POINTER(c_byte * len(AResponseDataArray))((c_byte * len(AResponseDataArray))(*AResponseDataArray))
-    r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, c_int32(AReqDataSize), AResdata,
-                                              byref(AResponseDataSize),
-                                              c_int32(ATimeOutMs))
+    r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, AReqDataSize, AResdata, byref(AResponseDataSize),
+                                          ATimeOutMs)
+    return r
     if r == 0:
         for i in range(AResponseDataSize.value):
-            ACANFDBuffers[i] = data.contents[i]
+            ACANFDBuffers[i] = AResdata.contents[i]
     return r
 
 
@@ -1088,3 +1088,18 @@ def tsdiag_lin_fault_memory_clear(AChnIdx: CHANNEL_INDEX, ANAD: c_int8, ANewSess
     return r
 
 
+def uds_create_can(udsHandle: c_int32, channel: CHANNEL_INDEX, ASupportCANFD: bool, AMaxDLC: c_byte, reqID: c_int32,
+                   reqisExtended: bool, resID: c_int32, resisExtended: bool):
+    r = dll_uds.s_create_can_diag(byref(udsHandle), channel, ASupportCANFD, c_int8(AMaxDLC), c_int32(reqID),
+                                  reqisExtended, c_int32(resID), resisExtended)
+    return r
+
+
+def tx_diag_req_and_get_res(udsHandle: c_int32, dataIn: bytearray, ReqSize: c_int32, dataOut: bytearray,
+                            resSize: c_int32, TimeOut: c_int32):
+    AReqdata = POINTER(c_byte * len(dataIn))((c_byte * len(dataIn))(*dataIn))
+    AResdata = POINTER(c_byte * len(dataOut))((c_byte * len(dataOut))(*dataOut))
+    r = dll_uds.s_tx_diag_req_and_get_res(udsHandle, AReqdata, c_int32(ReqSize), AResdata, byref(resSize),
+                                          c_int32(TimeOut))
+    print(AResdata.contents[0])
+    return r
