@@ -310,12 +310,15 @@ def tsapp_get_hw_info_by_index(AIndex: int, PLIBHWInfo: TLIBHWInfo):
 # 错误信息描述
 def tsapp_get_error_description(ACode: c_int32):
     errorcode = POINTER(POINTER(c_char))()
-    r = dll.tsapp_get_error_description(c_int32(ACode), byref(errorcode))
-    if r == 0:
-        ADesc = string_at(errorcode).decode("utf8")
-        return ADesc
+    if ACode ==0:
+        return "确定"
     else:
-        return r
+        r = dll.tsapp_get_error_description(c_int32(ACode), byref(errorcode))
+        if r == 0:
+            ADesc = string_at(errorcode).decode("utf-8")
+            return ADesc
+        else:
+            return r
 
 
 # 获取can每秒帧数，需要先使能总线统计
