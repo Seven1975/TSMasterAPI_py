@@ -93,7 +93,6 @@ class TSupportedObjType(Enum):
 
 AppName = "TSMasterCDemo".encode("utf8")
 dll = WinDLL(r".\TSMaster.dll")
-dll_logging = CDLL(r".\TSMaster.dll")
 
 
 # Struct
@@ -615,8 +614,8 @@ def tsapp_start_logging(filename: str):
 
 
 # 停止录制报文
-def tsapp_stop_logging(filename: str):
-    r = dll_logging.tsapp_stop_logging(filename)
+def tsapp_stop_logging():
+    r = dll.tsapp_stop_logging()
     return r
 
 

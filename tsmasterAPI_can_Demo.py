@@ -21,18 +21,13 @@ FDmsg.FDLC = 9
 FData0 = [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x20]
 for i in range(len(FData0)):
     FDmsg.FData[i] = FData0[i]
-count = 0
-
 
 def On_CAN_EVENT(OBJ, ACAN):
-    global count
+    global count_Event
     if (ACAN.contents.FIdentifier == 0x100 and ACAN.contents.FIdxChn == 0):
         print("回调接收成功")
         for i in ACAN.contents.FData:
             print('%#x' % i, end=' ')
-            count += 1
-            if (count % len(ACAN.contents.FData) == 0):
-                print(end='\n')
 
 
 OnCANevent = OnTx_RxFUNC_CAN(On_CAN_EVENT)
@@ -40,64 +35,64 @@ obj = c_int32(0)
 id1 = c_int32(0)  # 加载dbc句柄
 
 
-# def connect():
-#     # 初始化函数，所需所有函数调用的接口
-#     # initialize_lib_tsmaster(AppName)
-#     # 设置can通道数
-#     if (tsapp_set_can_channel_count(1) == 0):
-#         print("CAN通道设置成功")
-#     else:
-#         print("CAN通道设置失败")
-#     # 设置lin通道数
-#     if (tsapp_set_lin_channel_count(0) == 0):
-#         print("LIN通道设置成功")
-#     else:
-#         print("LIN通道设置失败")
-#     # 硬件通道映射至软件通道
-#     if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN1.value,
-#                                       "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
-#                                       TLIB_TS_Device_Sub_Type.TC1014.value, 0, True):
-#         print("1通道映射成功")
-#     else:
-#         print("1通道映射失败")
-#     if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN2.value,
-#                                       "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
-#                                       TLIB_TS_Device_Sub_Type.TC1014.value, 1, True):
-#         print("2通道映射成功")
-#     else:
-#         print("2通道映射失败")
-#     # 设置cnafd参数
-#     if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN1.value, 500.0, 2000.0,
-#                                            TLIBCANFDControllerType.lfdtISOCAN.value,
-#                                            TLIBCANFDControllerMode.lfdmNormal.value, True):
-#         print("1通道canfd波特率成功")
-#     else:
-#         print("1通道canfd波特率失败")
-#     if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN2.value, 500.0, 2000.0,
-#                                            TLIBCANFDControllerType.lfdtISOCAN.value,
-#                                            TLIBCANFDControllerMode.lfdmNormal.value, True):
-#         print("2通道canfd波特率成功")
-#     else:
-#         print("2通道canfd波特率失败")
-#     # 设置为CAN模式
-#     # if 0 == tsapp_configure_baudrate_can(CHANNEL_INDEX.CHN1.value, 500, False, True):
-#     #     print("1通道波特率成功")
-#     # else:
-#     #     print("1通道波特率失败")
-#     # if 0 == tsapp_configure_baudrate_can(CHANNEL_INDEX.CHN2.value, 500, False, True):
-#     #     print("2通道波特率成功")
-#     # else:
-#     #     print("2通道波特率失败")
-#     if 0 == tsapp_register_event_can(obj, OnCANevent):
-#         print("回调事件注册成功")
-#     else:
-#         print("回调事件注册失败")
-#     if 0 == tsapp_connect():
-#         print("can工具连接成功")
-#         # 硬件开启成功后，开启fifo接收
-#         tsfifo_enable_receive_fifo()
-#     else:
-#         print("can工具连接失败")
+def connect():
+    # 初始化函数，所需所有函数调用的接口
+    # initialize_lib_tsmaster(AppName)
+    # 设置can通道数
+    if (tsapp_set_can_channel_count(2) == 0):
+        print("CAN通道设置成功")
+    else:
+        print("CAN通道设置失败")
+    # 设置lin通道数
+    if (tsapp_set_lin_channel_count(0) == 0):
+        print("LIN通道设置成功")
+    else:
+        print("LIN通道设置失败")
+    # 硬件通道映射至软件通道
+    if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN1.value,
+                                      "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
+                                      TLIB_TS_Device_Sub_Type.TC1014.value, 0, True):
+        print("1通道映射成功")
+    else:
+        print("1通道映射失败")
+    if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN2.value,
+                                      "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
+                                      TLIB_TS_Device_Sub_Type.TC1014.value, 1, True):
+        print("2通道映射成功")
+    else:
+        print("2通道映射失败")
+    # 设置cnafd参数
+    if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN1.value, 500.0, 2000.0,
+                                           TLIBCANFDControllerType.lfdtISOCAN.value,
+                                           TLIBCANFDControllerMode.lfdmNormal.value, True):
+        print("1通道canfd波特率成功")
+    else:
+        print("1通道canfd波特率失败")
+    if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN2.value, 500.0, 2000.0,
+                                           TLIBCANFDControllerType.lfdtISOCAN.value,
+                                           TLIBCANFDControllerMode.lfdmNormal.value, True):
+        print("2通道canfd波特率成功")
+    else:
+        print("2通道canfd波特率失败")
+    # 设置为CAN模式
+    # if 0 == tsapp_configure_baudrate_can(CHANNEL_INDEX.CHN1.value, 500, False, True):
+    #     print("1通道波特率成功")
+    # else:
+    #     print("1通道波特率失败")
+    # if 0 == tsapp_configure_baudrate_can(CHANNEL_INDEX.CHN2.value, 500, False, True):
+    #     print("2通道波特率成功")
+    # else:
+    #     print("2通道波特率失败")
+    if 0 == tsapp_register_event_can(obj, OnCANevent):
+        print("回调事件注册成功")
+    else:
+        print("回调事件注册失败")
+    if 0 == tsapp_connect():
+        print("can工具连接成功")
+        # 硬件开启成功后，开启fifo接收
+        tsfifo_enable_receive_fifo()
+    else:
+        print("can工具连接失败")
 
 
 # 发送can canfd报文
@@ -178,7 +173,7 @@ def start_logging():
 
 
 def stop_logging():
-    tsapp_stop_logging(fileName)
+    tsapp_stop_logging()
 
 
 udsHandle = c_int32(0)
@@ -288,7 +283,7 @@ if __name__ == '__main__':
         print("注意后续对硬件操作必须先连接硬件，但如果需要加载dbc文件需先加载dbc再开启硬件")
         key = input("请输入")
         if key == '0':  # 连接硬件
-            tsapp_connect()
+            connect()
         elif key == '1':  # 先异步单帧发送报文，然后周期发送can canfd报文
             SendCANFD_CAN_Message()
         elif key == '2':  # 停止周期发送报文
