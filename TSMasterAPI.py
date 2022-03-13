@@ -163,10 +163,6 @@ def finalize_lib_tsmaster():
     dll.finalize_lib_tsmaster()
 
 
-def tsapp_show_tsmaster_window1():
-    dll.tsapp_show_tsmaster_window("Hardware".encode("utf8"), True)
-
-
 #  TSMasterAPI必须先调用该初始化函数，才可进行后续操作
 def initialize_lib_tsmaster(AppName: str):
     dll.initialize_lib_tsmaster(AppName)
@@ -606,7 +602,7 @@ def tsapp_unregister_events_all():
 
 # 打开TsMaster窗口
 def tsapp_show_tsmaster_window(AWindowName: str):
-    r = dll.tsapp_show_tsmaster_window(AWindowName, True)
+    r = dll.tsapp_show_tsmaster_window(AWindowName.encode("utf8"), False)
     return r
 
 
@@ -644,7 +640,7 @@ def tsapp_receive_can_msgs(ACANBuffers: TLIBCAN, ACANBufferSize: c_uint, AChn: C
 # 发送头帧接收数据
 def tsapp_transmit_header_and_receive_msg(AChn: CHANNEL_INDEX, ID: int, FDlc: c_uint8, receivedMsg: TLIBLIN,
                                           Timeout: c_int):
-    r = dll.tsapp_transmit_header_and_receive_msg(AChn, ID, FDlc, byref(receivedMsg), Timeout)
+    r = dll.tsapp_transmit_header_and_receive_msg(AChn, ID, FDlc, byref(receivedMsg), c_int32(Timeout))
     return r
 
 
@@ -788,11 +784,10 @@ def tsdb_get_can_db_id(AIndex: c_int32, AId: c_uint32):
 def tsdb_get_can_db_info(ADatabaseId: c_int32, AType: c_int32, AIndex: c_int32, ASubIndex: c_int32):
     AValue = POINTER(POINTER(c_char))()
     r = dll.tsdb_get_can_db_info(ADatabaseId, c_int32(AType), c_int32(AIndex), c_uint32(ASubIndex), byref(AValue))
-    if (r == 0):
-        AValue = string_at(AValue).decode("utf8")
-        return AValue
-    else:
-        return r
+    AValue = string_at(AValue).decode("utf8")
+    return r,AValue
+
+
 
 
 # 添加在线回放配置
@@ -942,22 +937,22 @@ def tsdiag_can_delete_all():
 
 def tstp_can_send_functional(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, AReqDataSize: c_int32,
                              ATimeOutMs: c_int32):
-    data = POINTER(c_byte * len(AReqDataArray))((c_byte * len(AReqDataArray))(*AReqDataArray))
+    data = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
     r = dll.tstp_can_send_functional(pDiagModuleIndex, data, AReqDataSize, c_int32(ATimeOutMs))
     return r
 
 
 def tstp_can_send_request(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, AReqDataSize: c_int32,
                           ATimeOutMs: c_int32):
-    data = POINTER(c_byte * len(AReqDataArray))((c_byte * len(AReqDataArray))(*AReqDataArray))
+    data = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
     r = dll.tstp_can_send_request(pDiagModuleIndex, data, AReqDataSize, c_int32(ATimeOutMs))
     return r
 
 
 def tstp_can_request_and_get_response(pDiagModuleIndex: c_int64, AReqDataArray: bytearray, AReqDataSize: c_int32,
                                   AResponseDataArray: bytearray, AResponseDataSize: c_int32, ATimeOutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(AReqDataArray))((c_byte * len(AReqDataArray))(*AReqDataArray))
-    AResdata = POINTER(c_byte * len(AResponseDataArray))((c_byte * len(AResponseDataArray))(*AResponseDataArray))
+    AReqdata = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
+    AResdata = POINTER(c_ubyte * len(AResponseDataArray))((c_ubyte * len(AResponseDataArray))(*AResponseDataArray))
     r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, AReqDataSize, AResdata, byref(AResponseDataSize),
                                           ATimeOutMs)
     return r
@@ -987,7 +982,7 @@ def tsdiag_can_communication_control(pDiagModuleIndex: c_int32, AControlType: c_
 
 def tsdiag_can_security_access_request_seed(pDiagModuleIndex: c_int32, ALevel: c_int32, ARecSeed: bytearray,
                                             ARecSeedSize: c_int32, ATimeoutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(ARecSeed))((c_byte * len(ARecSeed))(*ARecSeed))
+    AReqdata = POINTER(c_ubyte * len(ARecSeed))((c_ubyte * len(ARecSeed))(*ARecSeed))
     r = dll.tsdiag_can_security_access_request_seed(pDiagModuleIndex, ALevel, AReqdata, byref(ARecSeedSize),
                                                     c_int32(ATimeoutMs))
     return r
@@ -995,7 +990,7 @@ def tsdiag_can_security_access_request_seed(pDiagModuleIndex: c_int32, ALevel: c
 
 def tsdiag_can_security_access_send_key(pDiagModuleIndex: c_int32, ALevel: c_int32, AKeyValue: bytearray,
                                         AKeySize: c_int32, ATimeoutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(AKeyValue))((c_byte * len(AKeyValue))(*AKeyValue))
+    AReqdata = POINTER(c_ubyte * len(AKeyValue))((c_ubyte * len(AKeyValue))(*AKeyValue))
     r = dll.tsdiag_can_security_access_send_key(pDiagModuleIndex, ALevel, AReqdata, AKeySize, c_int32(ATimeoutMs))
     return r
 
@@ -1012,7 +1007,7 @@ def tsdiag_can_request_upload(pDiagModuleIndex: c_int32, AMemAddr: c_uint32, AMe
 
 def tsdiag_can_transfer_data(pDiagModuleIndex: c_int32, ASourceDatas: bytearray, ADataSize: c_int32, AReqCase: c_int32,
                              ATimeoutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(ASourceDatas))((c_byte * len(ASourceDatas))(*ASourceDatas))
+    AReqdata = POINTER(c_ubyte * len(ASourceDatas))((c_ubyte * len(ASourceDatas))(*ASourceDatas))
     r = dll.tsdiag_can_transfer_data(pDiagModuleIndex, AReqdata, ADataSize, AReqCase, c_int32(ATimeoutMs))
 
 
@@ -1023,15 +1018,15 @@ def tsdiag_can_request_transfer_exit(pDiagModuleIndex: c_int32, ATimeoutMs: c_in
 
 def tsdiag_can_write_data_by_identifier(pDiagModuleIndex: c_int32, ADataIdentifier: c_uint16, AWriteData: bytearray,
                                         AWriteDataSize: c_int32, ATimeOutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(AWriteData))((c_byte * len(AWriteData))(*AWriteData))
+    AReqdata = POINTER(c_ubyte * len(AWriteData))((c_ubyte * len(AWriteData))(*AWriteData))
     r = dll.tsdiag_can_write_data_by_identifier(pDiagModuleIndex, ADataIdentifier, AReqdata, AWriteDataSize,
-                                                c_int32(ATimeoutMs))
+                                                c_int32(ATimeOutMs))
     return r
 
 
 def tsdiag_can_read_data_by_identifier(pDiagModuleIndex: c_int32, ADataIdentifier: c_uint16, AReturnArray: bytearray,
                                        AReturnArraySize: c_int32, ATimeOutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(AReturnArray))((c_byte * len(AReturnArray))(*AReturnArray))
+    AReqdata = POINTER(c_ubyte * len(AReturnArray))((c_ubyte * len(AReturnArray))(*AReturnArray))
     r = dll.tsdiag_can_read_data_by_identifier(pDiagModuleIndex, ADataIdentifier, AReqdata, byref(AReturnArraySize),
                                                c_int32(ATimeOutMs))
     return r
@@ -1039,7 +1034,7 @@ def tsdiag_can_read_data_by_identifier(pDiagModuleIndex: c_int32, ADataIdentifie
 #LIN诊断
 def tstp_lin_master_request(AChnIdx: CHANNEL_INDEX, ANAD: c_int8, AData: bytearray, ADataNum: c_int,
                             ATimeoutMs: c_int32):
-    AReqdata = POINTER(c_byte * len(AData))((c_byte * len(AData))(*AData))
+    AReqdata = POINTER(c_ubyte * len(AData))((c_ubyte * len(AData))(*AData))
     r = dll.tstp_lin_master_request(AChnIdx, ANAD,byref(AReqdata) , c_int32(ADataNum), c_int32(ATimeoutMs))
     return r
 
@@ -1058,7 +1053,7 @@ def tstp_lin_slave_response_intervalms(AChnIdx:CHANNEL_INDEX,AData:c_int8):
 
 def tsdiag_lin_read_data_by_identifier(AChnIdx: CHANNEL_INDEX, ANAD: c_int8, AId: c_ushort, AResNAD: c_byte,
                                        AResData: bytearray, AResDataNum: c_int32, ATimeoutMS: c_int32):
-    Resdata = POINTER(c_byte * len(AResData))((c_byte * len(AResData))(*AResData))
+    Resdata = POINTER(c_ubyte * len(AResData))((c_ubyte * len(AResData))(*AResData))
     r = dll.tsdiag_lin_read_data_by_identifier(AChnIdx, c_int8(ANAD), c_ushort(AId), byref(AResNAD), Resdata,
                                                byref(AResDataNum), ATimeoutMS)
     return r
@@ -1068,8 +1063,8 @@ def tsdiag_lin_write_data_by_identifier(AChnIdx: CHANNEL_INDEX, ANAD: c_int8, AI
                                         AReqDataNum: c_int32,
                                         AResNAD: c_byte, AResData: bytearray, AResDataNum: c_int32,
                                         ATimeoutMS: c_int32):
-    Reqdata = POINTER(c_byte * len(AReqData))((c_byte * len(AReqData))(*AReqData))
-    Resdata = POINTER(c_byte * len(AResData))((c_byte * len(AResData))(*AResData))
+    Reqdata = POINTER(c_ubyte * len(AReqData))((c_ubyte * len(AReqData))(*AReqData))
+    Resdata = POINTER(c_ubyte * len(AResData))((c_ubyte * len(AResData))(*AResData))
 
     r = dll.tsdiag_lin_write_data_by_identifier(AChnIdx, c_int8(ANAD), c_ushort(AId), Reqdata, c_int32(AReqDataNum),
                                                 byref(AResNAD), Resdata, byref(AResDataNum), ATimeoutMS)
@@ -1097,9 +1092,11 @@ def uds_create_can(udsHandle: c_int32, channel: CHANNEL_INDEX, ASupportCANFD: bo
 
 def tx_diag_req_and_get_res(udsHandle: c_int32, dataIn: bytearray, ReqSize: c_int32, dataOut: bytearray,
                             resSize: c_int32, TimeOut: c_int32):
-    AReqdata = POINTER(c_byte * len(dataIn))((c_byte * len(dataIn))(*dataIn))
-    AResdata = POINTER(c_byte * len(dataOut))((c_byte * len(dataOut))(*dataOut))
+    AReqdata = POINTER(c_ubyte * len(dataIn))((c_ubyte * len(dataIn))(*dataIn))
+    AResdata = POINTER(c_ubyte * len(dataOut))((c_ubyte * len(dataOut))(*dataOut))
     r = dll_uds.s_tx_diag_req_and_get_res(udsHandle, AReqdata, c_int32(ReqSize), AResdata, byref(resSize),
                                           c_int32(TimeOut))
-    print(AResdata.contents[0])
+    if r:
+        for i in range(len(dataOut)):
+            dataOut[i] = AResdata.contents[i]
     return r

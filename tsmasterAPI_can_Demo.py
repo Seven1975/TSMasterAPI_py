@@ -305,17 +305,18 @@ if __name__ == '__main__':
         elif key == '7':  # 停止录制
             stop_logging()
         elif key == '8':  # 诊断相关，创建诊断模块需要在连接函数之前创建模块
-           # uds_create_can(udsHandle, 0, False, 8, 0X1, False, 0X2, False)
-           creat_uds_module()
+           uds_create_can(udsHandle, 0, False, 8, 0X1, False, 0X2, False)
+           # creat_uds_module()
         elif key == '9':  # 请求并获的回复
-            # AReqDataArray = [0x22, 0xf1, 0x90]
-            # AResSize = c_int32(0)
-            # AResponseDataArray = []
-            # for i in range(100):
-            #     item = 0
-            #     AResponseDataArray.append(item)
-            # tx_diag_req_and_get_res(udsHandle,AReqDataArray,3,AResponseDataArray,AResSize,100)
-            req_and_res_can()
+            AReqDataArray = [0x22, 0xf1, 0x90]
+            AResSize = c_int32(0)
+            AResponseDataArray = []
+            for i in range(100):
+                item = 0
+                AResponseDataArray.append(item)
+            tx_diag_req_and_get_res(udsHandle,AReqDataArray,3,AResponseDataArray,AResSize,100)
+            print(AResponseDataArray[0:7])
+            #req_and_res_can()
         elif key == 'a':
             read_blf()  # 读取blf
         elif key == 'b':  # 获取a blf中的数据
