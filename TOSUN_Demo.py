@@ -182,7 +182,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.tabWidget)
         self.horizontalLayout.addWidget(self.groupBox)
         self.groupBox_2 = QtWidgets.QGroupBox(self.centralwidget)
-        self.groupBox_2.setMaximumSize(QtCore.QSize(400, 16777215))
+        self.groupBox_2.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.groupBox_2.setObjectName("groupBox_2")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.groupBox_2)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
