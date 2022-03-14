@@ -1,7 +1,8 @@
-from TSMasterApi_py.TSMasterAPI import *
+from TSMasterAPI import *
 from ctypes import *
 import tkinter as tk
 from tkinter import filedialog
+from pyDes import *
 
 msg = TLIBCAN()
 msg.FIdxChn = 0
@@ -128,8 +129,9 @@ def receive_can_message():
         item = TLIBCANFD()
         listcanfdmsg.append(item)
     size = 100
-    r, canrecSize = tsapp_receive_can_msgs(listcanmsg, size, 1, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
-    r, canfdrecSize = tsapp_receive_canfd_msgs(listcanfdmsg, size, 1, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
+    r, canrecSize = tsapp_receive_can_msgs(listcanmsg, size, 0, READ_TX_RX_DEF.TX_RX_MESSAGES.value)
+
+    r, canfdrecSize = tsapp_receive_canfd_msgs(listcanfdmsg, size,0, READ_TX_RX_DEF.TX_RX_MESSAGES.value)
     print("接收返回值=", r)
     for i in range(canrecSize.value):
         print("fifo接收canID=", listcanmsg[i].FIdentifier)
@@ -175,7 +177,7 @@ def stop_logging():
     tsapp_stop_logging()
 
 
-udsHandle = c_int32(0)
+udsHandle = c_byte(0)
 
 
 def creat_uds_module():
@@ -188,16 +190,19 @@ def creat_uds_module():
 
 
 def req_and_res_can():
-    AReqDataArray = [0x22, 0xf1, 0x90]
-    AResSize = c_int(0)
-    AResponseDataArray = []
-    for i in range(100):
-        item = 0
-        AResponseDataArray.append(item)
+    global udsHandle
+    AReqDataArray = (c_uint8*100)()
+    AReqDataArray[0] = c_uint8(0x22)
+    AReqDataArray[1] = c_uint8(0xf1)
+    AReqDataArray[2] = c_uint8(0x90)
+    AResSize = c_int(100)
+    AResponseDataArray = (c_uint8*100)()
+    # for i in range(100):
+    #     item = 0
+    #     AResponseDataArray.append(item)
     r = tstp_can_request_and_get_response(udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize, 100)
-    print(tsapp_get_error_description(r))
     for i in range(AResSize.value):
-        print(AResponseDataArray[i], end="  ")
+        print(hex(AResponseDataArray[i]), end="  ")
         if i == AResSize.value - 1:
             print(end='\n')
 
@@ -261,6 +266,7 @@ def write_blf_start():
 if __name__ == '__main__':
 
     initialize_lib_tsmaster(AppName)
+    tsfifo_enable_receive_fifo()
     ret, ACount = get_enumerate_hw_devices()
     print("在线硬件数量有%#d个" % (ACount.value - 1))
     PTLIBHWInfo = TLIBHWInfo()
@@ -288,8 +294,9 @@ if __name__ == '__main__':
         key = input("请输入")
         if key == '0':  # 连接硬件
             # connect()
+
             tsapp_connect()
-            tsfifo_enable_receive_fifo()
+
         elif key == '1':  # 先异步单帧发送报文，然后周期发送can canfd报文
             SendCANFD_CAN_Message()
         elif key == '2':  # 停止周期发送报文
@@ -305,18 +312,21 @@ if __name__ == '__main__':
         elif key == '7':  # 停止录制
             stop_logging()
         elif key == '8':  # 诊断相关，创建诊断模块需要在连接函数之前创建模块
-           uds_create_can(udsHandle, 0, False, 8, 0X1, False, 0X2, False)
-           # creat_uds_module()
+           # uds_create_can(udsHandle, 0, False, 8, 0X1, False, 0X2, False)
+           creat_uds_module()
         elif key == '9':  # 请求并获的回复
-            AReqDataArray = [0x22, 0xf1, 0x90]
-            AResSize = c_int32(0)
-            AResponseDataArray = []
-            for i in range(100):
-                item = 0
-                AResponseDataArray.append(item)
-            tx_diag_req_and_get_res(udsHandle,AReqDataArray,3,AResponseDataArray,AResSize,100)
-            print(AResponseDataArray[0:7])
-            #req_and_res_can()
+            # AReqDataArray = [0x22, 0xf1, 0x90]
+            # AResSize = c_int32(0)
+            # AResponseDataArray = []
+            # for i in range(100):
+            #     item = 0
+            #     AResponseDataArray.append(item)
+            # tx_diag_req_and_get_res(udsHandle,AReqDataArray,3,AResponseDataArray,AResSize,20)
+            # for i in range(AResSize.value):
+            #     print("%#x"%AResponseDataArray[i],end=" ")
+            #     if i == 8:
+            #         print(end='\r\n')
+            req_and_res_can()
         elif key == 'a':
             read_blf()  # 读取blf
         elif key == 'b':  # 获取a blf中的数据

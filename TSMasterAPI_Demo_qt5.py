@@ -1,5 +1,5 @@
 from TOSUN_Demo import *  # 需要运行的.py文件名
-from TSMasterApi_py.TSMasterAPI import *
+from TSMasterAPI import *
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QTimer
@@ -280,24 +280,21 @@ class MyWindows(QMainWindow, Ui_MainWindow):
         tsapp_transmit_header_and_receive_msg(CHANNEL_INDEX.CHN1.value, 0X3D, 8, TLIN1, c_int(20))
 
     def creat_uds_module(self):
-        uds_create_can(self.udsHandle, 0, False, 8, 0X1, False, 0X2, False)
-        # global udsHandle
-        # r = tsdiag_can_create(udsHandle, CHANNEL_INDEX.CHN1.value, 0, 8, 0X1, True, 0X2, True, 0X3, True)
-        # if r == 0:
-        #     print("udsHandle = ", udsHandle)
-        # else:
-        #     print(tsapp_get_error_description(r))
+        # uds_create_can(self.udsHandle, 0, False, 8, 0X1, False, 0X2, False)
+
+        r = tsdiag_can_create(self.udsHandle, CHANNEL_INDEX.CHN1.value, 0, 8, 0X1, True, 0X2, True, 0X3, True)
+
     def req_and_get_res(self):
-        AReqDataArray = [0x22, 0xf1, 0x90]
-        AResSize = c_int32(0)
-        AResponseDataArray = []
-        for i in range(7):
-            item = 0
-            AResponseDataArray.append(item)
-        ret = tx_diag_req_and_get_res(self.udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize, 100)
-        if ret:
+        AReqDataArray = (c_uint8 * 100)()
+        AReqDataArray[0] = c_uint8(0x22)
+        AReqDataArray[1] = c_uint8(0xf1)
+        AReqDataArray[2] = c_uint8(0x90)
+        AResSize = c_int32(100)
+        AResponseDataArray = (c_uint8 * 100)()
+        r = tstp_can_request_and_get_response(self.udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize, 100)
+        if r == 0:
             a = ' '
-            self.textBrowser.append(a.join(hex(i) for i in AResponseDataArray) + "\r\n")
+            self.textBrowser.append(a.join(hex(i) for i in AResponseDataArray[0:AResSize.value]) + "\r\n")
             self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
         # AReqDataArray = [0x22, 0xf1, 0x90]
         # AResSize = c_int(0)

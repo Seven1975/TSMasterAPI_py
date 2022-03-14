@@ -915,15 +915,12 @@ def tslog_blf_write_end(AHeadle: c_int64):
 # 诊断相关API
 
 # 创建诊断服务
-def tsdiag_can_create(pDiagModuleIndex: c_int32, AChnIndex: CHANNEL_INDEX, ASupportFDCAN: c_byte, AMaxDLC: c_byte,
-                      ARequestID: c_uint32, ARequestIDIsStd: bool, AResponseID: c_uint32, AResponseIDIsStd: bool,
-                      AFunctionID: c_uint32, AFunctionIDIsStd: bool):
-    r = dll.tsdiag_can_create(byref(pDiagModuleIndex), AChnIndex, c_int8(ASupportFDCAN), c_int8(AMaxDLC),
-                              c_uint32(ARequestID), c_bool(ARequestIDIsStd),
-                                                           c_uint32(AResponseID), c_bool(AResponseIDIsStd),
-                                                           c_uint32(AFunctionID), c_bool(AFunctionIDIsStd))
+def tsdiag_can_create(udsHandle: c_int32, ChnIndex: CHANNEL_INDEX, ASupportFD: c_byte, AMaxdlc: c_byte, reqID: c_int32,
+                      ARequestIDIsStd: c_bool,
+                      resID: c_int32, resIsStd: c_bool, AFctID: c_int32, fctIsStd: c_bool):
+    r = dll.tsdiag_can_create(byref(udsHandle), ChnIndex, c_byte(ASupportFD), c_byte(AMaxdlc), reqID,
+                              c_bool(ARequestIDIsStd),resID,c_bool(resIsStd),AFctID,c_bool(fctIsStd))
     return r
-
 
 def tsdiag_can_delete(pDiagModuleIndex: c_int32):
     r = tsdiag_can_delete(pDiagModuleIndex)
@@ -949,16 +946,12 @@ def tstp_can_send_request(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, A
     return r
 
 
-def tstp_can_request_and_get_response(pDiagModuleIndex: c_int64, AReqDataArray: bytearray, AReqDataSize: c_int32,
-                                  AResponseDataArray: bytearray, AResponseDataSize: c_int32, ATimeOutMs: c_int32):
-    AReqdata = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
-    AResdata = POINTER(c_ubyte * len(AResponseDataArray))((c_ubyte * len(AResponseDataArray))(*AResponseDataArray))
-    r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, AReqDataSize, AResdata, byref(AResponseDataSize),
-                                          ATimeOutMs)
-    return r
-    if r == 0:
-        for i in range(AResponseDataSize.value):
-            ACANFDBuffers[i] = AResdata.contents[i]
+def tstp_can_request_and_get_response(udsHandle: c_int32, dataIn: bytearray, ReqSize: c_int32, dataOut: bytearray,
+                            resSize: c_int32, TimeOut: c_int32):
+
+    r = dll.tstp_can_request_and_get_response(udsHandle, dataIn, ReqSize, dataOut,pointer(resSize),
+                                          c_int32(TimeOut))
+
     return r
 
 
@@ -1083,20 +1076,20 @@ def tsdiag_lin_fault_memory_clear(AChnIdx: CHANNEL_INDEX, ANAD: c_int8, ANewSess
     return r
 
 
-def uds_create_can(udsHandle: c_int32, channel: CHANNEL_INDEX, ASupportCANFD: bool, AMaxDLC: c_byte, reqID: c_int32,
-                   reqisExtended: bool, resID: c_int32, resisExtended: bool):
-    r = dll_uds.s_create_can_diag(byref(udsHandle), channel, ASupportCANFD, c_int8(AMaxDLC), c_int32(reqID),
-                                  reqisExtended, c_int32(resID), resisExtended)
-    return r
-
-
-def tx_diag_req_and_get_res(udsHandle: c_int32, dataIn: bytearray, ReqSize: c_int32, dataOut: bytearray,
-                            resSize: c_int32, TimeOut: c_int32):
-    AReqdata = POINTER(c_ubyte * len(dataIn))((c_ubyte * len(dataIn))(*dataIn))
-    AResdata = POINTER(c_ubyte * len(dataOut))((c_ubyte * len(dataOut))(*dataOut))
-    r = dll_uds.s_tx_diag_req_and_get_res(udsHandle, AReqdata, c_int32(ReqSize), AResdata, byref(resSize),
-                                          c_int32(TimeOut))
-    if r:
-        for i in range(len(dataOut)):
-            dataOut[i] = AResdata.contents[i]
-    return r
+# def uds_create_can(udsHandle: c_int32, channel: CHANNEL_INDEX, ASupportCANFD: bool, AMaxDLC: c_byte, reqID: c_int32,
+#                    reqisExtended: bool, resID: c_int32, resisExtended: bool):
+#     r = dll_uds.s_create_can_diag(byref(udsHandle), channel, ASupportCANFD, c_int8(AMaxDLC), c_int32(reqID),
+#                                   reqisExtended, c_int32(resID), resisExtended)
+#     return r
+#
+#
+# def tx_diag_req_and_get_res(udsHandle: c_int32, dataIn: bytearray, ReqSize: c_int32, dataOut: bytearray,
+#                             resSize: c_int32, TimeOut: c_int32):
+#     AReqdata = POINTER(c_ubyte * len(dataIn))((c_ubyte * len(dataIn))(*dataIn))
+#     AResdata = POINTER(c_ubyte * len(dataOut))((c_ubyte * len(dataOut))(*dataOut))
+#     r = dll_uds.s_tx_diag_req_and_get_res(udsHandle, AReqdata, c_int32(ReqSize), AResdata, byref(resSize),
+#                                           c_int32(TimeOut))
+#     if r:
+#         for i in range(len(dataOut)):
+#             dataOut[i] = AResdata.contents[i]
+#     return r
