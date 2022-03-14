@@ -1,8 +1,7 @@
-from TSMasterAPI import *
+from TSMasterApi_py.TSMasterAPI import *
 from ctypes import *
 import tkinter as tk
 from tkinter import filedialog
-from pyDes import *
 
 msg = TLIBCAN()
 msg.FIdxChn = 0
@@ -165,7 +164,7 @@ def unload_dbcs():
     if 0 == tsdb_unload_can_dbs():
         print("DBC文件全部卸载")
 
-
+# 需要绝对路径
 fileName = "E:\\sofewareIDE\\python\\py36_32\\tsmaster_test\\1.blf".encode("utf8")
 
 
@@ -283,6 +282,8 @@ if __name__ == '__main__':
     print("5: 卸载DBC文件")
     print("6: 开录制报文")
     print("7: 停止制报文")
+    print("8: 新建诊断模块")
+    print("9: req_res")
     print("q: 退出程序")
     print("a: 读取blf")
     print("b: 获取a blf中的数据")
