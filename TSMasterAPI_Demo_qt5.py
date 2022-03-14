@@ -1,5 +1,5 @@
 from TOSUN_Demo import *  # 需要运行的.py文件名
-from TSMasterAPI import *
+from TSMasterApi_py.TSMasterAPI import *
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QTimer
@@ -145,6 +145,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
 
         r = tsapp_enumerate_hw_devices(self.ACount)
         if r == 0:
+            self.comboBox.clear()
             for i in range(self.ACount.value):
                 self.comboBox.addItem(i.__str__())
 
