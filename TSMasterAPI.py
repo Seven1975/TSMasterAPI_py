@@ -954,6 +954,23 @@ def tstp_can_request_and_get_response(udsHandle: c_int32, dataIn: bytearray, Req
 
     return r
 
+# AReqDataArray = [0x22,0xf1,0x90]
+# size = c_int32(100)
+# AResponseDataArray = []
+# for i in range(100):
+#     item = 0
+#     AResponseDataArray.append(item)
+# tstp_can_request_and_get_response_s(udsHandle,AReqDataArray,3,AResponseDataArray,size,100)
+def tstp_can_request_and_get_response_s(pDiagModuleIndex: c_int64, AReqDataArray: bytearray, AReqDataSize: c_int32,
+                                  AResponseDataArray: bytearray, AResponseDataSize: c_int32, ATimeOutMs: c_int32):
+    AReqdata = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
+    AResdata = POINTER(c_ubyte * len(AResponseDataArray))((c_ubyte * len(AResponseDataArray))(*AResponseDataArray))
+    r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, AReqDataSize, AResdata, byref(AResponseDataSize),
+                                          ATimeOutMs)
+    if r == 0:
+        for i in range(AResponseDataSize.value):
+            AResponseDataArray[i] = AResdata.contents[i]
+    return r
 
 # 诊断服务
 
