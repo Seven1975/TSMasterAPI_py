@@ -206,7 +206,7 @@ def tsapp_set_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8,
 
 # 删除硬件通道映射
 def tsapp_del_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8, APP_Channel: c_int32):
-    r = dll.tsapp_del_mapping_verbose(AppName.encode("utf8"), TLIBApplicationChannelType, APP_Channel)
+    r = dll.tsapp_del_mapping_verbose(AppName, TLIBApplicationChannelType, APP_Channel)
     return r
 
 
@@ -251,12 +251,12 @@ def tsapp_disconnect():
 
 
 def tsapp_add_application(AppName: str):
-    r = tsapp_add_application(AppName.encode("utf8"))
+    r = tsapp_add_application(AppName)
     return r
 
 
 def tsapp_del_application(AppName: str):
-    r = tsapp_del_application(AppName.encode("utf8"))
+    r = tsapp_del_application(AppName)
     return r
 
 
@@ -346,7 +346,7 @@ def tsapp_get_mapping(AMapping: TLIBTSMapping):
 
 # 获取详细硬件映射信息
 def tsapp_get_mapping_verbose(APPName: str, ApplicationChannelType: c_int32, AMapping: TLIBTSMapping):
-    r = dll.tsapp_get_mapping_verbose(APPName.encode("utf8"), ApplicationChannelType, byref(AMapping))
+    r = dll.tsapp_get_mapping_verbose(APPName, ApplicationChannelType, byref(AMapping))
     return r
 
 
@@ -605,7 +605,7 @@ def tsapp_unregister_events_all():
 
 # 打开TsMaster窗口
 def tsapp_show_tsmaster_window(AWindowName: str):
-    r = dll.tsapp_show_tsmaster_window(AWindowName.encode("utf8"), False)
+    r = dll.tsapp_show_tsmaster_window(AWindowName, False)
     return r
 
 
@@ -736,26 +736,26 @@ def tscom_can_rbs_configure(AAutoStart: c_bool, AAutoSendOnModification: c_bool,
 
 
 # 获取can信号值
-def tsdb_get_signal_value_can(ACAN: TLIBCAN, AMsgName: str, ASgnName: str, AValue: c_int32):
-    r = dll.tsdb_get_signal_value_can(ACAN, AMsgName.encode("utf8"), ASgnName.encode("utf8"), byref(AValue))
+def tsdb_get_signal_value_can(ACAN: TLIBCAN, AMsgName: str, ASgnName: str, AValue: c_double):
+    r = dll.tsdb_get_signal_value_can(byref(ACAN), AMsgName, ASgnName, byref(AValue))
     return r
 
 
 # 获取canfd信号值
-def tsdb_get_signal_value_canfd(ACANFD: TLIBCANFD, AMsgName: str, ASgnName: str, AValue: c_int32):
-    r = dll.tsdb_get_signal_value_canfd(ACANFD, AMsgName.encode("utf8"), ASgnName.encode("utf8"), byref(AValue))
+def tsdb_get_signal_value_canfd(ACANFD: TLIBCANFD, AMsgName: str, ASgnName: str, AValue: c_double):
+    r = dll.tsdb_get_signal_value_canfd(byref(ACANFD), AMsgName, ASgnName, byref(AValue))
     return r
 
 
 # 设置can信号值
-def tsdb_set_signal_value_can(ACAN: TLIBCAN, AMsgName: str, ASgnName: str, AValue: c_int32):
-    r = dll.tsdb_set_signal_value_can(ACAN, AMsgName.encode("utf8"), ASgnName.encode("utf8"), AValue)
+def tsdb_set_signal_value_can(ACAN: TLIBCAN, AMsgName: str, ASgnName: str, AValue: c_double):
+    r = dll.tsdb_set_signal_value_can(byref(ACAN), AMsgName.encode, ASgnName, AValue)
     return r
 
 
 # 设置canfd信号值
-def tsdb_set_signal_value_canfd(ACANFD: TLIBCANFD, AMsgName: str, ASgnName: str, AValue: c_int32):
-    r = dll.tsdb_set_signal_value_canfd(ACANFD, AMsgName.encode("utf8"), ASgnName.encode("utf8"), AValue)
+def tsdb_set_signal_value_canfd(ACANFD: TLIBCANFD, AMsgName: str, ASgnName: str, AValue: c_double):
+    r = dll.tsdb_set_signal_value_canfd(byref(ACANFD), AMsgName, ASgnName, AValue)
     return r
 
 
