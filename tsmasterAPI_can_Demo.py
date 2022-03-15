@@ -1,3 +1,4 @@
+# 本示例基于TC1014
 from TSMasterApi_py.TSMasterAPI import *
 from ctypes import *
 import tkinter as tk
@@ -294,9 +295,9 @@ if __name__ == '__main__':
 
         key = input("请输入")
         if key == '0':  # 连接硬件
-            # connect()
+            connect()
 
-            tsapp_connect()
+            # tsapp_connect()
 
         elif key == '1':  # 先异步单帧发送报文，然后周期发送can canfd报文
             SendCANFD_CAN_Message()

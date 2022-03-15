@@ -93,7 +93,6 @@ class TSupportedObjType(Enum):
 
 AppName = "TSMasterCDemo".encode("utf8")
 dll = WinDLL(r".\TSMaster.dll")
-dll_uds = CDLL(r".\UDS_DLL.dll")
 
 # Struct
 class TLIBTSMapping(Structure):
@@ -193,6 +192,10 @@ def tsapp_get_lin_channel_count(count: c_int32):
 
 
 # 按需创建通道映射
+def tsapp_set_mapping(mapping:TLIBTSMapping):
+    r = dll.tsapp_set_mapping(byref(mapping))
+    return r
+
 def tsapp_set_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8, CHANNEL_INDEX: c_int32, HW_name: str,
                               BusToolDeviceType: c_int32, HW_Type: c_int32, AHardwareChannel: c_int32,
                               AEnableMapping: c_bool):
