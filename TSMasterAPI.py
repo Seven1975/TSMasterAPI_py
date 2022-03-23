@@ -196,8 +196,8 @@ def tsapp_set_mapping(mapping:TLIBTSMapping):
     r = dll.tsapp_set_mapping(byref(mapping))
     return r
 
-def tsapp_set_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8, CHANNEL_INDEX: c_int32, HW_name: str,
-                              BusToolDeviceType: c_int32, HW_Type: c_int32, AHardwareChannel: c_int32,
+def tsapp_set_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8, CHANNEL_INDEX: CHANNEL_INDEX, HW_name: str,
+                              BusToolDeviceType: c_int32, HW_Type: c_int32, AHardwareChannel: CHANNEL_INDEX,
                               AEnableMapping: c_bool):
     r = dll.tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType, CHANNEL_INDEX, HW_name, BusToolDeviceType,
                                       HW_Type, 0, AHardwareChannel, AEnableMapping)
@@ -205,35 +205,58 @@ def tsapp_set_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8,
 
 
 # 删除硬件通道映射
-def tsapp_del_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8, APP_Channel: c_int32):
+def tsapp_del_mapping_verbose(AppName: str, TLIBApplicationChannelType: c_uint8, APP_Channel: CHANNEL_INDEX):
     r = dll.tsapp_del_mapping_verbose(AppName, TLIBApplicationChannelType, APP_Channel)
     return r
 
 
 # 设置can通道参数 bps
-def tsapp_configure_baudrate_can(APP_Channel: c_int32, ABaudrateKbps: c_float, AListenOnly: c_bool,
+def tsapp_configure_baudrate_can(APP_Channel: CHANNEL_INDEX, ABaudrateKbps: c_float, AListenOnly: c_bool,
                                  AInstallTermResistor120Ohm: c_bool):
     r = dll.tsapp_configure_baudrate_can(APP_Channel, c_float(ABaudrateKbps), AListenOnly, AInstallTermResistor120Ohm)
     return r
 
 
 # 设置canfd通道波特率
-def tsapp_configure_baudrate_canfd(AIdxChn: c_int32, ABaudrateArbKbps: c_float, ABaudrateDataKbps: c_float,
+def tsapp_configure_baudrate_canfd(AIdxChn: CHANNEL_INDEX, ABaudrateArbKbps: c_float, ABaudrateDataKbps: c_float,
                                    AControllerType: c_int16, AControllerMode: c_int16,
                                    AInstallTermResistor120Ohm: c_bool):
     r = dll.tsapp_configure_baudrate_canfd(AIdxChn, c_float(ABaudrateArbKbps), c_float(ABaudrateDataKbps),
                                            AControllerType, AControllerMode, AInstallTermResistor120Ohm)
     return r
 
+#can brs 采样率设置
+def tsapp_configure_can_regs(AIdxChn: CHANNEL_INDEX, ABaudrateKbps: float, ASEG1: int, ASEG2: int, APrescaler: int,
+                             ASJ2: int, A120: bool):
+    r = dll.tsapp_configure_can_regs(AIdxChn, c_float(ABaudrateKbps), c_int32(ASEG1),c_int32(ASEG2),
+                                     c_int32(APrescaler), c_int32(ASJ2), A120)
+    return r
+
+# canfd brs 采样率设置
+def tsapp_configure_canfd_regs(AIdxChn: CHANNEL_INDEX, AArbBaudrateKbps: float, AArbSEG1: int, AArbSEG2: int,
+                               AArbPrescaler: int,
+                               AArbSJ2: int, ADataBaudrateKbps: float, ADataSEG1: int, ADataSEG2: int,
+                               ADataPrescaler: int,
+                               ADataSJ2: int, AControllerType: TLIBCANFDControllerType,
+                               AControllerMode: TLIBCANFDControllerMode,
+                               AInstallTermResistor120Ohm: c_bool):
+    r = dll.tsapp_configure_canfd_regs(AIdxChn, c_float(AArbBaudrateKbps), c_int32(AArbSEG1), c_int32(AArbSEG2),
+                                     c_int32(AArbPrescaler), c_int32(AArbSJ2),
+                                     c_float(ADataBaudrateKbps), c_int32(ADataSEG1),
+                                     c_int32(ADataSEG2), c_int32(ADataPrescaler), c_int32(ADataSJ2), AControllerType,
+                                     AControllerMode,
+                                     AInstallTermResistor120Ohm)
+    return r
+
 
 # 设置lin通道波特率
-def tsapp_configure_baudrate_lin(AIdxChn: c_int32, ABaudrateKbps: int, LIN_PROTOCOL: LIN_PROTOCOL):
+def tsapp_configure_baudrate_lin(AIdxChn: CHANNEL_INDEX, ABaudrateKbps: int, LIN_PROTOCOL: LIN_PROTOCOL):
     r = dll.tsapp_configure_baudrate_lin(AIdxChn, c_float(ABaudrateKbps), LIN_PROTOCOL)
     return r
 
 
 # 设置LIN模式
-def tslin_set_node_funtiontype(AIdxChn: c_int32, TLINNodeType: T_LIN_NODE_FUNCTION):
+def tslin_set_node_funtiontype(AIdxChn: CHANNEL_INDEX, TLINNodeType: T_LIN_NODE_FUNCTION):
     r = dll.tslin_set_node_funtiontype(AIdxChn, TLINNodeType)
     return r
 
@@ -321,19 +344,19 @@ def tsapp_get_error_description(ACode: c_int32):
 
 
 # 获取can每秒帧数，需要先使能总线统计
-def tsapp_get_fps_can(AIdxChn: c_int32, AIdentifier: c_int32, AFPS: c_int32):
+def tsapp_get_fps_can(AIdxChn: CHANNEL_INDEX, AIdentifier: c_int32, AFPS: c_int32):
     r = dll.tsapp_get_fps_can(AIdxChn, AIdentifier, byref(AFPS))
     return r
 
 
 # 获取canfd每秒帧数，需要先使能总线统计
-def tsapp_get_fps_canfd(AIdxChn: c_int32, AIdentifier: c_int32, AFPS: c_int32):
+def tsapp_get_fps_canfd(AIdxChn: CHANNEL_INDEX, AIdentifier: c_int32, AFPS: c_int32):
     r = dll.tsapp_get_fps_canfd(AIdxChn, AIdentifier, byref(AFPS))
     return r
 
 
 # 获取canfd每秒帧数，需要先使能总线统计
-def tsapp_get_fps_lin(AIdxChn: c_int32, AIdentifier: c_int32, AFPS: c_int32):
+def tsapp_get_fps_lin(AIdxChn: CHANNEL_INDEX, AIdentifier: c_int32, AFPS: c_int32):
     r = dll.tsapp_get_fps_lin(AIdxChn, AIdentifier, byref(AFPS))
     return r
 
@@ -384,91 +407,91 @@ def tsfifo_disable_receive_error_frames():
 
 
 # 读取通道can缓冲帧数量
-def tsfifo_read_can_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_can_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_can_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道can Tx数量
-def tsfifo_read_can_tx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_can_tx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_can_tx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道can Rx数量
-def tsfifo_read_can_rx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_can_rx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_can_rx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道canfd Tx数量
-def tsfifo_read_canfd_tx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_canfd_tx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_canfd_tx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道canfd Rx数量
-def tsfifo_read_canfd_rx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_canfd_rx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_canfd_rx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道fastlin缓冲帧数量
-def tsfifo_read_fastlin_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_fastlin_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_fastlin_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道fastlin Tx数量
-def tsfifo_read_fastlin_tx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_fastlin_tx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_fastlin_tx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道fastlin Rx数量
-def tsfifo_read_fastlin_rx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_fastlin_rx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_fastlin_rx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道lin缓冲帧数量
-def tsfifo_read_lin_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_lin_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_lin_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道lin Tx数量
-def tsfifo_read_lin_tx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_lin_tx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_lin_tx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 读取通道lin Rx数量
-def tsfifo_read_lin_rx_buffer_frame_count(AIdxChn: c_int32, ACount: c_int32):
+def tsfifo_read_lin_rx_buffer_frame_count(AIdxChn: CHANNEL_INDEX, ACount: c_int32):
     r = dll.tsfifo_read_lin_rx_buffer_frame_count(AIdxChn, byref(ACount))
     return r
 
 
 # 清除 通道can_receive_buffers
-def tsfifo_clear_can_receive_buffers(AIdxChn: c_int32):
+def tsfifo_clear_can_receive_buffers(AIdxChn: CHANNEL_INDEX):
     r = dll.tsfifo_clear_can_receive_buffers(AIdxChn)
     return r
 
 
 # 清除 通道canfd_receive_buffers
-def tsfifo_clear_canfd_receive_buffers(AIdxChn: c_int32):
+def tsfifo_clear_canfd_receive_buffers(AIdxChn: CHANNEL_INDEX):
     r = dll.tsfifo_clear_canfd_receive_buffers(AIdxChn)
     return r
 
 
 # 清除 通道fastlin_receive_buffers
-def tsfifo_clear_fastlin_receive_buffers(AIdxChn: c_int32):
+def tsfifo_clear_fastlin_receive_buffers(AIdxChn: CHANNEL_INDEX):
     r = dll.tsfifo_clear_fastlin_receive_buffers(AIdxChn)
     return r
 
 
 # 清除 通道lin_receive_buffers
-def tsfifo_clear_lin_receive_buffers(AIdxChn: c_int32):
+def tsfifo_clear_lin_receive_buffers(AIdxChn: CHANNEL_INDEX):
     r = dll.tsfifo_clear_lin_receive_buffers(AIdxChn)
     return r
 

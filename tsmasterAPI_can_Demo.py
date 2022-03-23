@@ -63,18 +63,21 @@ def connect():
     else:
         print("2通道映射失败")
     # 设置cnafd参数
-    if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN1.value, 500.0, 2000.0,
-                                           TLIBCANFDControllerType.lfdtISOCAN.value,
-                                           TLIBCANFDControllerMode.lfdmNormal.value, True):
+    if 0 == tsapp_configure_canfd_regs(CHANNEL_INDEX.CHN1.value, 500, 7, 2, 8, 10, 2000, 2, 1, 5, 4,
+                                       TLIBCANFDControllerType.lfdtISOCAN.value,
+                                       TLIBCANFDControllerMode.lfdmNormal.value, True):
+    # if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN1.value, 500.0, 2000.0,
+    #                                        TLIBCANFDControllerType.lfdtISOCAN.value,
+    #                                        TLIBCANFDControllerMode.lfdmNormal.value, True):
         print("1通道canfd波特率成功")
     else:
         print("1通道canfd波特率失败")
-    if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN2.value, 500.0, 2000.0,
-                                           TLIBCANFDControllerType.lfdtISOCAN.value,
-                                           TLIBCANFDControllerMode.lfdmNormal.value, True):
-        print("2通道canfd波特率成功")
-    else:
-        print("2通道canfd波特率失败")
+    # if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN2.value, 500.0, 2000.0,
+    #                                        TLIBCANFDControllerType.lfdtISOCAN.value,
+    #                                        TLIBCANFDControllerMode.lfdmNormal.value, True):
+    #     print("2通道canfd波特率成功")
+    # else:
+    #     print("2通道canfd波特率失败")
     # 设置为CAN模式
     # if 0 == tsapp_configure_baudrate_can(CHANNEL_INDEX.CHN1.value, 500, False, True):
     #     print("1通道波特率成功")
