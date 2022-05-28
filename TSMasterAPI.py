@@ -7,6 +7,7 @@
 from ctypes import *
 from enum import Enum
 import copy
+import time
 
 
 # Enum
@@ -34,6 +35,7 @@ class TLIB_TS_Device_Sub_Type(Enum):
     TC1014 = c_int(8)
     TSCANFD2517 = c_int(9)
     TC1026 = c_int(10)
+    TC1016 = c_int(11)
 
 
 class TLIBBusToolDeviceType(Enum):
@@ -222,14 +224,14 @@ def tsapp_configure_baudrate_canfd(AIdxChn: CHANNEL_INDEX, ABaudrateArbKbps: c_f
                                    AControllerType: c_int16, AControllerMode: c_int16,
                                    AInstallTermResistor120Ohm: c_bool):
     r = dll.tsapp_configure_baudrate_canfd(AIdxChn, c_float(ABaudrateArbKbps), c_float(ABaudrateDataKbps),
-                                           AControllerType, AControllerMode, AInstallTermResistor120Ohm)
+                                           AControllerType, AControllerMode,AInstallTermResistor120Ohm)
     return r
 
-#can brs 采样率设置
+#can brs 采样率设置  AOnlyListen=0表示只听模式  A120大于0表示激活终端电阻，=0表示不激活
 def tsapp_configure_can_regs(AIdxChn: CHANNEL_INDEX, ABaudrateKbps: float, ASEG1: int, ASEG2: int, APrescaler: int,
-                             ASJ2: int, A120: bool):
+                             ASJ2: int,AOnlyListen:int ,A120: int):
     r = dll.tsapp_configure_can_regs(AIdxChn, c_float(ABaudrateKbps), c_int32(ASEG1),c_int32(ASEG2),
-                                     c_int32(APrescaler), c_int32(ASJ2), A120)
+                                     c_int32(APrescaler),c_int32(ASJ2),c_uint32(AOnlyListen),c_int32(A120))
     return r
 
 # canfd brs 采样率设置
@@ -239,13 +241,13 @@ def tsapp_configure_canfd_regs(AIdxChn: CHANNEL_INDEX, AArbBaudrateKbps: float, 
                                ADataPrescaler: int,
                                ADataSJ2: int, AControllerType: TLIBCANFDControllerType,
                                AControllerMode: TLIBCANFDControllerMode,
-                               AInstallTermResistor120Ohm: c_bool):
+                               AInstallTermResistor120Ohm: int):
     r = dll.tsapp_configure_canfd_regs(AIdxChn, c_float(AArbBaudrateKbps), c_int32(AArbSEG1), c_int32(AArbSEG2),
                                      c_int32(AArbPrescaler), c_int32(AArbSJ2),
                                      c_float(ADataBaudrateKbps), c_int32(ADataSEG1),
                                      c_int32(ADataSEG2), c_int32(ADataPrescaler), c_int32(ADataSJ2), AControllerType,
                                      AControllerMode,
-                                     AInstallTermResistor120Ohm)
+                                     c_int32(AInstallTermResistor120Ohm) )
     return r
 
 
@@ -941,8 +943,7 @@ def tslog_blf_write_end(AHeadle: c_int64):
 # 诊断相关API
 
 # 创建诊断服务
-def tsdiag_can_create(udsHandle: c_int32, ChnIndex: CHANNEL_INDEX, ASupportFD: c_byte, AMaxdlc: c_byte, reqID: c_int32,
-                      ARequestIDIsStd: c_bool,
+def tsdiag_can_create(udsHandle: c_int32, ChnIndex: CHANNEL_INDEX, ASupportFD: c_byte, AMaxdlc: c_byte, reqID: c_int32,ARequestIDIsStd: c_bool,
                       resID: c_int32, resIsStd: c_bool, AFctID: c_int32, fctIsStd: c_bool):
     r = dll.tsdiag_can_create(byref(udsHandle), ChnIndex, c_byte(ASupportFD), c_byte(AMaxdlc), reqID,
                               c_bool(ARequestIDIsStd),resID,c_bool(resIsStd),AFctID,c_bool(fctIsStd))
@@ -957,26 +958,39 @@ def tsdiag_can_delete_all():
     r = dll.tsdiag_can_delete_all()
     return r
 
+def tsdiag_set_p2_extended(pDiagModuleIndex: c_int32,TimeOut):
+    r = dll.tsdiag_set_p2_extended(pDiagModuleIndex,c_int32(TimeOut))
+    return r
 
-def tstp_can_send_functional(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, AReqDataSize: c_int32,
-                             ATimeOutMs: c_int32):
+def tsdiag_set_p2_timeout(pDiagModuleIndex: c_int32,TimeOut):
+    r = dll.tsdiag_set_p2_timeout(pDiagModuleIndex,c_int32(TimeOut))
+    return r
+
+def tsdiag_set_s3_clienttime(pDiagModuleIndex: c_int32,TimeOut):
+    r = dll.tsdiag_set_s3_clienttime(pDiagModuleIndex,c_int32(TimeOut))
+    return r
+
+def tsdiag_set_s3_servertime(pDiagModuleIndex: c_int32,TimeOut):
+    r = dll.tsdiag_set_s3_servertime(pDiagModuleIndex,c_int32(TimeOut))
+    return r
+
+def tstp_can_send_functional(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, AReqDataSize: c_int32):
     data = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
-    r = dll.tstp_can_send_functional(pDiagModuleIndex, data, AReqDataSize, c_int32(ATimeOutMs))
+    r = dll.tstp_can_send_functional(pDiagModuleIndex, data, AReqDataSize)
     return r
 
 
-def tstp_can_send_request(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, AReqDataSize: c_int32,
-                          ATimeOutMs: c_int32):
+def tstp_can_send_request(pDiagModuleIndex: c_int32, AReqDataArray: bytearray, AReqDataSize: c_int32
+                          ):
     data = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
-    r = dll.tstp_can_send_request(pDiagModuleIndex, data, AReqDataSize, c_int32(ATimeOutMs))
+    r = dll.tstp_can_send_request(pDiagModuleIndex, data, AReqDataSize)
     return r
 
 
 def tstp_can_request_and_get_response(udsHandle: c_int32, dataIn: bytearray, ReqSize: c_int32, dataOut: bytearray,
-                            resSize: c_int32, TimeOut: c_int32):
+                            resSize: c_int32):
 
-    r = dll.tstp_can_request_and_get_response(udsHandle, dataIn, ReqSize, dataOut,pointer(resSize),
-                                          c_int32(TimeOut))
+    r = dll.tstp_can_request_and_get_response(udsHandle, dataIn, ReqSize, dataOut,pointer(resSize))
 
     return r
 
@@ -988,11 +1002,10 @@ def tstp_can_request_and_get_response(udsHandle: c_int32, dataIn: bytearray, Req
 #     AResponseDataArray.append(item)
 # tstp_can_request_and_get_response_s(udsHandle,AReqDataArray,3,AResponseDataArray,size,100)
 def tstp_can_request_and_get_response_s(pDiagModuleIndex: c_int64, AReqDataArray: bytearray, AReqDataSize: c_int32,
-                                  AResponseDataArray: bytearray, AResponseDataSize: c_int32, ATimeOutMs: c_int32):
+                                  AResponseDataArray: bytearray, AResponseDataSize: c_int32):
     AReqdata = POINTER(c_ubyte * len(AReqDataArray))((c_ubyte * len(AReqDataArray))(*AReqDataArray))
     AResdata = POINTER(c_ubyte * len(AResponseDataArray))((c_ubyte * len(AResponseDataArray))(*AResponseDataArray))
-    r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, AReqDataSize, AResdata, byref(AResponseDataSize),
-                                          ATimeOutMs)
+    r = dll.tstp_can_request_and_get_response(pDiagModuleIndex, AReqdata, AReqDataSize, AResdata, byref(AResponseDataSize))
     if r == 0:
         for i in range(AResponseDataSize.value):
             AResponseDataArray[i] = AResdata.contents[i]
@@ -1000,71 +1013,67 @@ def tstp_can_request_and_get_response_s(pDiagModuleIndex: c_int64, AReqDataArray
 
 # 诊断服务
 
-def tsdiag_can_session_control(pDiagModuleIndex: c_int32, ASubSession: c_byte, ATimeoutMs: c_int32):
-    r = dll.tsdiag_can_session_control(pDiagModuleIndex, ASubSession, c_int32(ATimeoutMs))
+def tsdiag_can_session_control(pDiagModuleIndex: c_int32, ASubSession: c_byte):
+    r = dll.tsdiag_can_session_control(pDiagModuleIndex, ASubSession)
     return r
 
 
 def tsdiag_can_routine_control(pDiagModuleIndex: c_int32, ARoutineControlType: c_byte, ARoutintID: c_uint16,
                                ATimeoutMs: c_int32):
-    r = dll.tsdiag_can_routine_control(pDiagModuleIndex, ARoutineControlType, ARoutintID, c_int32(ATimeoutMs))
+    r = dll.tsdiag_can_routine_control(pDiagModuleIndex, ARoutineControlType, ARoutintID)
     return r
 
 
 def tsdiag_can_communication_control(pDiagModuleIndex: c_int32, AControlType: c_byte, ATimeoutMs: c_int32):
-    r = dll.tsdiag_can_communication_control(pDiagModuleIndex, AControlType, c_int32(ATimeoutMs))
+    r = dll.tsdiag_can_communication_control(pDiagModuleIndex, AControlType)
     return r
 
 
 def tsdiag_can_security_access_request_seed(pDiagModuleIndex: c_int32, ALevel: c_int32, ARecSeed: bytearray,
-                                            ARecSeedSize: c_int32, ATimeoutMs: c_int32):
+                                            ARecSeedSize: c_int32):
     AReqdata = POINTER(c_ubyte * len(ARecSeed))((c_ubyte * len(ARecSeed))(*ARecSeed))
-    r = dll.tsdiag_can_security_access_request_seed(pDiagModuleIndex, ALevel, AReqdata, byref(ARecSeedSize),
-                                                    c_int32(ATimeoutMs))
+    r = dll.tsdiag_can_security_access_request_seed(pDiagModuleIndex, ALevel, AReqdata, byref(ARecSeedSize))
     return r
 
 
 def tsdiag_can_security_access_send_key(pDiagModuleIndex: c_int32, ALevel: c_int32, AKeyValue: bytearray,
                                         AKeySize: c_int32, ATimeoutMs: c_int32):
     AReqdata = POINTER(c_ubyte * len(AKeyValue))((c_ubyte * len(AKeyValue))(*AKeyValue))
-    r = dll.tsdiag_can_security_access_send_key(pDiagModuleIndex, ALevel, AReqdata, AKeySize, c_int32(ATimeoutMs))
+    r = dll.tsdiag_can_security_access_send_key(pDiagModuleIndex, ALevel, AReqdata, AKeySize)
     return r
 
 
-def tsdiag_can_request_download(pDiagModuleIndex: c_int32, AMemAddr: c_uint32, AMemSize: c_uint32, ATimeoutMs: c_int32):
-    r = dll.tsdiag_can_request_download(pDiagModuleIndex, AMemAddr, AMemSize, c_int32(ATimeoutMs))
+def tsdiag_can_request_download(pDiagModuleIndex: c_int32, AMemAddr: c_uint32, AMemSize: c_uint32):
+    r = dll.tsdiag_can_request_download(pDiagModuleIndex, AMemAddr, AMemSize)
     return r
 
 
-def tsdiag_can_request_upload(pDiagModuleIndex: c_int32, AMemAddr: c_uint32, AMemSize: c_uint32, ATimeoutMs: c_int32):
-    r = dll.tsdiag_can_request_upload(pDiagModuleIndex, AMemAddr, AMemSize, c_int32(ATimeoutMs))
+def tsdiag_can_request_upload(pDiagModuleIndex: c_int32, AMemAddr: c_uint32, AMemSize: c_uint32):
+    r = dll.tsdiag_can_request_upload(pDiagModuleIndex, AMemAddr, AMemSize)
     return r
 
 
-def tsdiag_can_transfer_data(pDiagModuleIndex: c_int32, ASourceDatas: bytearray, ADataSize: c_int32, AReqCase: c_int32,
-                             ATimeoutMs: c_int32):
+def tsdiag_can_transfer_data(pDiagModuleIndex: c_int32, ASourceDatas: bytearray, ADataSize: c_int32, AReqCase: c_int32):
     AReqdata = POINTER(c_ubyte * len(ASourceDatas))((c_ubyte * len(ASourceDatas))(*ASourceDatas))
-    r = dll.tsdiag_can_transfer_data(pDiagModuleIndex, AReqdata, ADataSize, AReqCase, c_int32(ATimeoutMs))
+    r = dll.tsdiag_can_transfer_data(pDiagModuleIndex, AReqdata, ADataSize, AReqCase)
 
 
-def tsdiag_can_request_transfer_exit(pDiagModuleIndex: c_int32, ATimeoutMs: c_int32):
-    r = dll.tsdiag_can_request_transfer_exit(pDiagModuleIndex, c_int32(ATimeoutMs))
+def tsdiag_can_request_transfer_exit(pDiagModuleIndex: c_int32):
+    r = dll.tsdiag_can_request_transfer_exit(pDiagModuleIndex)
     return r
 
 
 def tsdiag_can_write_data_by_identifier(pDiagModuleIndex: c_int32, ADataIdentifier: c_uint16, AWriteData: bytearray,
-                                        AWriteDataSize: c_int32, ATimeOutMs: c_int32):
+                                        AWriteDataSize: c_int32):
     AReqdata = POINTER(c_ubyte * len(AWriteData))((c_ubyte * len(AWriteData))(*AWriteData))
-    r = dll.tsdiag_can_write_data_by_identifier(pDiagModuleIndex, ADataIdentifier, AReqdata, AWriteDataSize,
-                                                c_int32(ATimeOutMs))
+    r = dll.tsdiag_can_write_data_by_identifier(pDiagModuleIndex, ADataIdentifier, AReqdata, AWriteDataSize)
     return r
 
 
 def tsdiag_can_read_data_by_identifier(pDiagModuleIndex: c_int32, ADataIdentifier: c_uint16, AReturnArray: bytearray,
-                                       AReturnArraySize: c_int32, ATimeOutMs: c_int32):
+                                       AReturnArraySize: c_int32):
     AReqdata = POINTER(c_ubyte * len(AReturnArray))((c_ubyte * len(AReturnArray))(*AReturnArray))
-    r = dll.tsdiag_can_read_data_by_identifier(pDiagModuleIndex, ADataIdentifier, AReqdata, byref(AReturnArraySize),
-                                               c_int32(ATimeOutMs))
+    r = dll.tsdiag_can_read_data_by_identifier(pDiagModuleIndex, ADataIdentifier, AReqdata, byref(AReturnArraySize))
     return r
 
 #LIN诊断
@@ -1136,3 +1145,396 @@ def tsdiag_lin_fault_memory_clear(AChnIdx: CHANNEL_INDEX, ANAD: c_int8, ANewSess
 #         for i in range(len(dataOut)):
 #             dataOut[i] = AResdata.contents[i]
 #     return r
+class CANmessage():
+    channel = 0
+    IsSupportCANFD = False
+    RequestID = 0X1
+    RequestID_IsStandard =1
+    RequestID_IsData = True
+    RespondID = 0X2
+    RespondID_IsStandard = 1
+    RespondID_IsData = True
+    FunctionalID = 0X3
+    FunctionalID_IsStandard = 1
+    FunctionalID_IsData = True
+    FMAXlen = 8  #最大15
+
+DLC_DATA_BYTE_CNT= (
+    0, 1, 2, 3, 4, 5, 6, 7,
+    8, 12, 16, 20, 24, 32, 48, 64
+)
+
+class diag():
+
+    CANmessages = []
+    for i in range(32):
+        item = CANmessage()
+        CANmessages.append(item)
+    Handle = 0
+
+
+    def get_bit_val(self,byte, index):
+        if byte & (1 << index):
+            return 1
+        else:
+            return 0
+
+    def set_bit_val(self,byte, index, val):
+        if val:
+            return byte | (1 << index)
+        else:
+            return byte & ~(1 << index)
+
+
+    def create_diag_model(self,channel,IsSupportCANFD,RequestID,RequestID_IsStandard,RequestID_IsData,RespondID,RespondID_IsStandard,RespondID_IsData,FunctionalID,FunctionalID_IsStandard,FunctionalID_IsData,FMAXlen):
+        if self.Handle > 31:
+            return False, 0XFF
+        udsHandle = self.Handle
+        self.CANmessages[udsHandle].channel = channel
+        self.CANmessages[udsHandle].IsSupportCANFD = IsSupportCANFD
+
+        self.CANmessages[udsHandle].RequestID = RequestID
+        self.CANmessages[udsHandle].RequestID_IsStandard = RequestID_IsStandard
+        self.CANmessages[udsHandle].RequestID_IsData = RequestID_IsData
+
+        self.CANmessages[udsHandle].RespondID = RespondID
+        self.CANmessages[udsHandle].RespondID_IsStandard = RespondID_IsStandard
+        self.CANmessages[udsHandle].RespondID_IsData = RespondID_IsData
+
+        self.CANmessages[udsHandle].FunctionalID = FunctionalID
+        self.CANmessages[udsHandle].FunctionalID_IsStandard = FunctionalID_IsStandard
+        self.CANmessages[udsHandle].FunctionalID_IsData = FunctionalID_IsData
+
+        self.CANmessages[udsHandle].FMAXlen = FMAXlen
+        self.Handle += 1
+        return True,udsHandle
+
+
+    def receive_one_message(self, udsHandle, Datalist, timeout):
+        listcanfdmsg = []
+        item = TLIBCANFD()
+        listcanfdmsg.append(item)
+        size = 1
+        Datalist.clear()
+        startTime = time.clock()
+        while time.clock()-startTime < timeout:
+            r, canfdrecSize = tsapp_receive_canfd_msgs(listcanfdmsg, size, self.CANmessages[udsHandle].channel, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
+            if r == 0 and (listcanfdmsg[0].FFDProperties == self.CANmessages[udsHandle].IsSupportCANFD) and listcanfdmsg[0].FIdentifier == self.CANmessages[udsHandle].RespondID and (((listcanfdmsg[0].FProperties>>2) & 1) != self.CANmessages[udsHandle].RespondID_IsStandard):
+             for i in range(DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen]):
+                 Datalist.append(listcanfdmsg[0].FData[i])
+             return True
+        return False
+
+    def receive_can_Response(self, udsHandle, Datalist, timeOut):
+
+        MsgLength = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen]
+
+        FristDataLength = MsgLength - 2
+
+        DataLength = MsgLength - 1
+
+        CANFDMsg = TLIBCANFD()
+        CANFDMsg.FIdxChn = self.CANmessages[udsHandle].channel
+        CANFDMsg.FIdentifier = self.CANmessages[udsHandle].RequestID
+        CANFDMsg.FFDProperties = 0
+        if self.CANmessages[udsHandle].IsSupportCANFD:
+            CANFDMsg.FFDProperties = 1
+        CANFDMsg.FDLC = self.CANmessages[udsHandle].FMAXlen
+        CANFDMsg.FData[0] = 0x30
+        for i in range(MsgLength-1):
+            CANFDMsg.FData[i+1] = 0xAA
+
+        StartTime = time.clock()
+        endTime = time.clock()
+
+        while endTime-StartTime < timeOut:
+            msgs = []
+            if self.receive_one_message(udsHandle, msgs, timeOut):
+                N_PCItype = msgs[0] >> 4
+                if 0 == N_PCItype:
+                    ResSize = (msgs[0] & 0xf)
+                    if msgs[1] == 0x7f and msgs[3] == 0x78:
+                        StartTime = time.clock()
+                        continue
+                    for i in range(ResSize):
+                        Datalist.append(msgs[i+1])
+                elif 1 == N_PCItype:
+                    ResSize = (msgs[0] & 0xf)*256 +msgs[1]
+                    for i in range(FristDataLength):
+                        Datalist.append(msgs[i + 1])
+                    if 0 == tsapp_transmit_canfd_async(CANFDMsg):
+                        snCnt =0x1
+                        rxIndex = FristDataLength
+                        while rxIndex < ResSize and time.clock()-StartTime < timeOut:
+                                if self.receive_one_message(udsHandle, msgs, timeOut):
+                                    N_PCItype = msgs[0] >> 4
+                                    if N_PCItype != 2:
+                                        break
+                                    rxSN = msgs[0] & 0xf
+                                    if rxSN != snCnt & 0xf:
+                                        break
+                                    snCnt += 1
+                                    rxLen = ResSize - rxIndex
+                                    if rxLen > DataLength:
+                                        rxLen = DataLength
+                                    for i in range(rxLen):
+                                        Datalist.append(msgs[i + 1])
+                                    rxIndex += rxLen
+                                    if rxIndex == ResSize:
+                                        return True,ResSize
+            endTime = time.clock()
+        return False, 0X7F
+
+    def tstp_can_send_request(self,udsHandle,SendDatas):
+        CANMsg = TLIBCAN()
+        CANMsg.FIdxChn = self.CANmessages[udsHandle].channel
+        CANMsg.FIdentifier = self.CANmessages[udsHandle].RequestID
+        CANMsg.FDLC = self.CANmessages[udsHandle].FMAXlen
+        MsgLen = len(SendDatas)
+        txIndex = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 2
+        Datalengh = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 1
+
+        if self.CANmessages[udsHandle].RequestID_IsStandard:
+            self.set_bit_val(CANMsg.FProperties, 6, 0)
+        else:
+            self.set_bit_val(CANMsg.FProperties, 6, 1)
+        if self.CANmessages[udsHandle].RequestID_IsData:
+            self.set_bit_val(CANMsg.FProperties, 7, 0)
+        else:
+            self.set_bit_val(CANMsg.FProperties, 7, 1)
+        if len(SendDatas) <= Datalengh:
+            CANMsg.FData[0] = MsgLen
+            for i in range(MsgLen):
+                CANMsg.FData[i+1] = SendDatas[i]
+            if 0 == tsapp_transmit_can_async(CANMsg):
+                return True
+            return False
+        else:
+            CANMsg.FData[0] = 0x10
+            CANMsg.FData[1] = MsgLen
+            for i in range(txIndex):
+                CANMsg.FData[i + 2] = SendDatas[i]
+            tsfifo_clear_canfd_receive_buffers(CANMsg.FIdxChn)
+            if 0 == tsapp_transmit_can_async(CANMsg):
+                Datalist = []
+                snCnt = 1
+                if self.receive_one_message(udsHandle, Datalist, 0.2) and Datalist[0] == 0x30:
+                    while txIndex < MsgLen:
+                        CANMsg.FData[0] = (0x20 | (snCnt & 0xf))
+                        snCnt += 1
+                        txLen = MsgLen - txIndex
+                        if txLen > Datalengh:
+                            txLen = Datalengh
+                        else:
+                            for i in range(txLen,Datalengh):
+                                CANMsg.FData[i + 1] = 0xAA
+                        for i in range(txLen):
+                            CANMsg.FData[i+1] = SendDatas[i + txIndex]
+                        if tsapp_transmit_canfd_async(CANMsg) != 0:
+                            break
+                        txIndex += txLen
+                        if txIndex >= MsgLen:
+                            return True
+                return False
+            else:
+                return False
+
+    def tstp_canfd_send_request(self,udsHandle,SendDatas):
+        CANFDMsg = TLIBCANFD()
+        CANFDMsg.FIdxChn = self.CANmessages[udsHandle].channel
+        CANFDMsg.FIdentifier = self.CANmessages[udsHandle].RequestID
+        CANFDMsg.FFDProperties = 1
+        CANFDMsg.FDLC = self.CANmessages[udsHandle].FMAXlen
+        MsgLen = len(SendDatas)
+        txIndex = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 2
+        Datalengh = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 1
+
+        if self.CANmessages[udsHandle].RequestID_IsStandard:
+            self.set_bit_val(CANFDMsg.FProperties, 6, 0)
+        else:
+            self.set_bit_val(CANFDMsg.FProperties, 6, 1)
+
+        if self.CANmessages[udsHandle].RequestID_IsData:
+            self.set_bit_val(CANFDMsg.FProperties, 7, 0)
+        else:
+            self.set_bit_val(CANFDMsg.FProperties, 7, 1)
+
+        if len(SendDatas) <= Datalengh:
+            CANFDMsg.FData[0] = MsgLen
+            for i in range(MsgLen):
+                CANFDMsg.FData[i + 1] = SendDatas[i]
+            if 0 == tsapp_transmit_canfd_async(CANFDMsg):
+                return True
+            return False
+        else:
+            CANFDMsg.FData[0] = 0x10
+            CANFDMsg.FData[1] = MsgLen
+            for i in range(txIndex):
+                CANFDMsg.FData[i + 2] = SendDatas[i]
+            tsfifo_clear_canfd_receive_buffers(CANFDMsg.FIdxChn)
+            if 0 == tsapp_transmit_canfd_async(CANFDMsg):
+                Datalist = []
+                snCnt = 1
+                if self.receive_one_message(udsHandle, Datalist, 0.2) and Datalist[0] == 0x30:
+                    while txIndex < MsgLen:
+                # while txIndex < MsgLen:
+                #     if self.receive_one_message(udsHandle, Datalist, 0.2) and Datalist[0] == 0x30:
+                        CANFDMsg.FData[0] = (0x20 | (snCnt & 0xf))
+                        snCnt += 1
+                        txLen = MsgLen - txIndex
+                        if txLen > Datalengh:
+                            txLen = Datalengh
+                        else:
+                            for i in range(txLen, Datalengh):
+                                CANFDMsg.FData[i + 1] = 0xAA
+                        for i in range(txLen):
+                            CANFDMsg.FData[i + 1] = SendDatas[i + txIndex]
+                        if tsapp_transmit_canfd_async(CANFDMsg) != 0:
+                            break
+                        txIndex += txLen
+                        if txIndex >= MsgLen:
+                            return True
+                return False
+            else:
+                return False
+
+    def tstp_can_send_functional(self,udsHandle,SendDatas):
+        CANMsg = TLIBCAN()
+        CANMsg.FIdxChn = self.CANmessages[udsHandle].channel
+        CANMsg.FIdentifier = self.CANmessages[udsHandle].FunctionalID
+        CANMsg.FDLC = self.CANmessages[udsHandle].FMAXlen
+        MsgLen = len(SendDatas)
+        txIndex = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 2
+        Datalengh = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 1
+
+        if self.CANmessages[udsHandle].FunctionalID_IsStandard:
+            self.set_bit_val(CANMsg.FProperties, 6, 0)
+        else:
+            self.set_bit_val(CANMsg.FProperties, 6, 1)
+
+        if self.CANmessages[udsHandle].FunctionalID_IsData:
+            self.set_bit_val(CANMsg.FProperties, 7, 0)
+        else:
+            self.set_bit_val(CANMsg.FProperties, 7, 1)
+
+        if len(SendDatas) <= Datalengh:
+            CANMsg.FData[0] = MsgLen
+            for i in range(MsgLen):
+                CANMsg.FData[i + 1] = SendDatas[i]
+            if 0 == tsapp_transmit_can_async(CANMsg):
+                return True
+            return False
+        else:
+            CANMsg.FData[0] = 0x10
+            CANMsg.FData[1] = MsgLen
+            for i in range(txIndex):
+                CANMsg.FData[i + 2] = SendDatas[i]
+            tsfifo_clear_canfd_receive_buffers(CANMsg.FIdxChn)
+            if 0 == tsapp_transmit_can_async(CANMsg):
+                Datalist = []
+                snCnt = 1
+                if self.receive_one_message(udsHandle, Datalist, 0.2) and Datalist[0] == 0x30:
+                    while txIndex < MsgLen:
+                        CANMsg.FData[0] = (0x20 | (snCnt & 0xf))
+                        snCnt += 1
+                        txLen = MsgLen - txIndex
+                        if txLen > Datalengh:
+                            txLen = Datalengh
+                        else:
+                            for i in range(txLen, Datalengh):
+                                CANMsg.FData[i + 1] = 0xAA
+                        for i in range(txLen):
+                            CANMsg.FData[i + 1] = SendDatas[i + txIndex]
+                        if tsapp_transmit_canfd_async(CANMsg) != 0:
+                            break
+                        txIndex += txLen
+                        if txIndex >= MsgLen:
+                            return True
+                return False
+            else:
+                return False
+
+    def tstp_canfd_send_functional(self,udsHandle,SendDatas):
+        CANFDMsg = TLIBCANFD()
+        CANFDMsg.FIdxChn = self.CANmessages[udsHandle].channel
+        CANFDMsg.FIdentifier = self.CANmessages[udsHandle].FunctionalID
+        CANFDMsg.FDLC = self.CANmessages[udsHandle].FMAXlen
+        CANFDMsg.FFDProperties = 1
+        MsgLen = len(SendDatas)
+        txIndex = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 2
+        Datalengh = DLC_DATA_BYTE_CNT[self.CANmessages[udsHandle].FMAXlen] - 1
+
+        if self.CANmessages[udsHandle].FunctionalID_IsStandard:
+            self.set_bit_val(CANFDMsg.FProperties, 6, 0)
+        else:
+            self.set_bit_val(CANFDMsg.FProperties, 6, 1)
+        if self.CANmessages[udsHandle].FunctionalID_IsData:
+            self.set_bit_val(CANFDMsg.FProperties, 7, 0)
+        else:
+            self.set_bit_val(CANFDMsg.FProperties, 7, 1)
+        if len(SendDatas) <= Datalengh:
+            CANFDMsg.FData[0] = MsgLen
+            for i in range(MsgLen):
+                CANFDMsg.FData[i + 1] = SendDatas[i]
+            if 0 == tsapp_transmit_canfd_async(CANFDMsg):
+                return True
+            return False
+        else:
+            CANFDMsg.FData[0] = 0x10
+            CANFDMsg.FData[1] = MsgLen
+            for i in range(txIndex):
+                CANFDMsg.FData[i + 2] = SendDatas[i]
+            tsfifo_clear_canfd_receive_buffers(CANFDMsg.FIdxChn)
+            if 0 == tsapp_transmit_canfd_async(CANFDMsg):
+                Datalist = []
+                snCnt = 1
+                if self.receive_one_message(udsHandle, Datalist, 0.2) and Datalist[0] == 0x30:
+                    while txIndex < MsgLen:
+                        CANFDMsg.FData[0] = (0x20 | (snCnt & 0xf))
+                        snCnt += 1
+                        txLen = MsgLen - txIndex
+                        if txLen > Datalengh:
+                            txLen = Datalengh
+                        else:
+                            for i in range(txLen, Datalengh):
+                                CANFDMsg.FData[i + 1] = 0xAA
+                        for i in range(txLen):
+                            CANFDMsg.FData[i + 1] = SendDatas[i + txIndex]
+                        if tsapp_transmit_canfd_async(CANFDMsg) != 0:
+                            break
+                        txIndex += txLen
+                        if txIndex >= MsgLen:
+                            return True
+                return False
+            else:
+                return False
+
+    def tstp_can_request_and_get_response(self,udsHandle,SendDatas,ReceiveData,Timeout):
+        if self.CANmessages[udsHandle].IsSupportCANFD:
+            ret = self.tstp_canfd_send_request(udsHandle, SendDatas)
+        else:
+            ret = self.tstp_can_send_request(udsHandle, SendDatas)
+        if ret:
+          res ,resSize  = self.receive_can_Response(udsHandle, ReceiveData,Timeout)
+          return res ,resSize
+        else:
+            return False, 0x7F
+
+    def tstp_can_request_and_get_response_functional(self,udsHandle,SendDatas,ReceiveData,Timeout):
+        if self.CANmessages[udsHandle].IsSupportCANFD:
+            ret = self.tstp_canfd_send_functional(udsHandle, SendDatas)
+        else:
+            ret = self.tstp_can_send_functional(udsHandle, SendDatas)
+        if ret:
+            return self.receive_can_Response(udsHandle, ReceiveData, Timeout)
+        else:
+            return False, 0x7F
+if __name__ == "__main__":
+    if key == 'd':
+        res, udsHandle = diag.create_diag_model(0, True, 0X1, 1, True, 0x2, 1, True, 0X3, 1, True, 8)
+        sendData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13]
+        diag.tstp_canfd_send_functional(udsHandle, sendData)
+        sendData1 = [0x22, 0xf1, 0x90]
+        ReceiveData = []
+        res, resSize = diag.tstp_can_request_and_get_response_functional(udsHandle, sendData1, ReceiveData, 1)
+        print(ReceiveData)

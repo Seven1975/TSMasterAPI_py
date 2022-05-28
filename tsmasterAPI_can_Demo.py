@@ -24,7 +24,6 @@ for i in range(len(FData0)):
 
 
 def On_CAN_EVENT(OBJ, ACAN):
-    global count_Event
     if (ACAN.contents.FIdentifier == 0x100 and ACAN.contents.FIdxChn == 0):
         print("回调接收成功")
         for i in ACAN.contents.FData:
@@ -40,35 +39,37 @@ def connect():
     # 初始化函数，所需所有函数调用的接口
     # initialize_lib_tsmaster(AppName)
     # 设置can通道数
-    if (tsapp_set_can_channel_count(2) == 0):
+    if (tsapp_set_can_channel_count(1) == 0):
         print("CAN通道设置成功")
     else:
-        print("CAN通道设置失败")
+        print("CAN通道设置失败",tsapp_set_can_channel_count(1))
     # 设置lin通道数
     if (tsapp_set_lin_channel_count(0) == 0):
         print("LIN通道设置成功")
     else:
         print("LIN通道设置失败")
     # 硬件通道映射至软件通道
-    if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN1.value,
-                                      "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
-                                      TLIB_TS_Device_Sub_Type.TC1014.value, 0, True):
+    if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN1.value,"TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
+                                      TLIB_TS_Device_Sub_Type.TC1016.value, 0, True):
         print("1通道映射成功")
     else:
         print("1通道映射失败")
-    if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN2.value,
-                                      "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
-                                      TLIB_TS_Device_Sub_Type.TC1014.value, 1, True):
-        print("2通道映射成功")
-    else:
-        print("2通道映射失败")
-    # 设置cnafd参数
-    if 0 == tsapp_configure_canfd_regs(CHANNEL_INDEX.CHN1.value, 500, 7, 2, 8, 10, 2000, 2, 1, 5, 4,
-                                       TLIBCANFDControllerType.lfdtISOCAN.value,
-                                       TLIBCANFDControllerMode.lfdmNormal.value, True):
-    # if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN1.value, 500.0, 2000.0,
-    #                                        TLIBCANFDControllerType.lfdtISOCAN.value,
-    #                                        TLIBCANFDControllerMode.lfdmNormal.value, True):
+    # if 0 == tsapp_set_mapping_verbose(AppName, TLIBApplicationChannelType.APP_CAN.value, CHANNEL_INDEX.CHN2.value,
+    #                                   "TC1014".encode("UTF8"), TLIBBusToolDeviceType.TS_USB_DEVICE.value,
+    #                                   TLIB_TS_Device_Sub_Type.TC1014.value, 1, True):
+    #     print("2通道映射成功")
+    # else:
+    #     print("2通道映射失败")
+
+    # 设置canfd采样率，
+    # if 0 == tsapp_configure_canfd_regs(CHANNEL_INDEX.CHN1.value, 500, 7, 2, 8, 10, 2000, 2, 1, 5, 4,
+    #                                    TLIBCANFDControllerType.lfdtISOCAN.value,
+    #                                    TLIBCANFDControllerMode.lfdmNormal.value, True):
+
+    #设置canfd波特率
+    if 0 == tsapp_configure_baudrate_canfd(CHANNEL_INDEX.CHN1.value, 500.0, 2000.0,
+                                           TLIBCANFDControllerType.lfdtISOCAN.value,
+                                           TLIBCANFDControllerMode.lfdmNormal.value, True):
         print("1通道canfd波特率成功")
     else:
         print("1通道canfd波特率失败")
@@ -109,11 +110,11 @@ def SendCANFD_CAN_Message():
     else:
         print(r)
 
-    ret1 = tsapp_add_cyclic_msg_can(msg, 100)
-
-    ret2 = tsapp_add_cyclic_msg_canfd(FDmsg, 100)
-    if ret1 == 0 and ret2 == 0:
-        print("can周期发送成功 && canfd周期发送成功")
+    # ret1 = tsapp_add_cyclic_msg_can(msg, 100)
+    #
+    # ret2 = tsapp_add_cyclic_msg_canfd(FDmsg, 100)
+    # if ret1 == 0 and ret2 == 0:
+    #     print("can周期发送成功 && canfd周期发送成功")
 
 
 def stop_cyclic_msg_can():
@@ -186,6 +187,10 @@ udsHandle = c_byte(0)
 def creat_uds_module():
     global udsHandle
     r = tsdiag_can_create(udsHandle, CHANNEL_INDEX.CHN1.value, 0, 8, 0X1, True, 0X2, True, 0X3, True)
+    # r = tsdiag_set_p2_extended(udsHandle,2000)
+    # r = tsdiag_set_p2_timeout(udsHandle, 150)
+    # r = tsdiag_set_s3_clienttime(udsHandle, 3000)
+    # r = tsdiag_set_s3_servertime(udsHandle, 3000)
     if r == 0:
         print("udsHandle = ", udsHandle)
     else:
@@ -203,7 +208,7 @@ def req_and_res_can():
     # for i in range(100):
     #     item = 0
     #     AResponseDataArray.append(item)
-    r = tstp_can_request_and_get_response(udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize, 100)
+    r = tstp_can_request_and_get_response(udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize)
     for i in range(AResSize.value):
         print(hex(AResponseDataArray[i]), end="  ")
         if i == AResSize.value - 1:
@@ -278,6 +283,7 @@ if __name__ == '__main__':
         print(PTLIBHWInfo.FDeviceType, PTLIBHWInfo.FDeviceIndex, PTLIBHWInfo.FVendorName.decode("utf8"),
               PTLIBHWInfo.FDeviceName.decode("utf8"),
               PTLIBHWInfo.FSerialString.decode("utf8"))
+    diag = diag()
     print("0: 连接硬件")
     print("1: 发送报文")
     print("2: 停止周期发送")
@@ -340,5 +346,4 @@ if __name__ == '__main__':
             write_blf_start()
         elif key == 'q':
             break
-
     finalize_lib_tsmaster()

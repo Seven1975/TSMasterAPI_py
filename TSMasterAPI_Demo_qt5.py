@@ -73,6 +73,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
     dbc_id = c_int32(0)
     blf_id = c_int32(0)
     blf_count = c_int32(0)
+
     def __init__(self):
         super(MyWindows, self).__init__()
         self.setupUi(self)
@@ -150,7 +151,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
                 self.comboBox.addItem(i.__str__())
 
     def show_Hardware_window(self):
-        tsapp_show_tsmaster_window("Hardware")
+        tsapp_show_tsmaster_window("Hardware".encode("utf8"))
         self.textBrowser.append("硬件配置成功\r\n")
         self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
@@ -179,22 +180,34 @@ class MyWindows(QMainWindow, Ui_MainWindow):
               PTLIBHWInfo.FSerialString.decode("utf8"))
 
     def register_event_can(self):
-        tsapp_register_event_can(self.CANobj, OnCANevent)
+        if 0 == tsapp_register_event_can(self.CANobj, OnCANevent):
+            self.textBrowser.append("can回调事件注册成功\r\n")
+            self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
     def register_event_canfd(self):
-        tsapp_register_event_canfd(self.CANFDobj, OnCANFDevent)
+        if 0 == tsapp_register_event_canfd(self.CANFDobj, OnCANFDevent):
+            self.textBrowser.append("canfd回调事件注册成功\r\n")
+            self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
     def unregister_event_can(self):
-        tsapp_unregister_event_can(self.CANobj, OnCANevent)
+        if 0 == tsapp_unregister_event_can(self.CANobj, OnCANevent):
+            self.textBrowser.append("can回调事件注销成功\r\n")
+            self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
     def unregister_event_canfd(self):
-        tsapp_unregister_event_canfd(self.CANFDobj, OnCANFDevent)
+        if 0 == tsapp_unregister_event_canfd(self.CANFDobj, OnCANFDevent):
+            self.textBrowser.append("canfd回调事件注销成功\r\n")
+            self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
     def register_event_lin(self):
-        tsapp_register_event_lin(self.LINobj, OnLINevent)
+        if 0 == tsapp_register_event_lin(self.LINobj, OnLINevent):
+            self.textBrowser.append("lin回调事件注册成功\r\n")
+            self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
     def unregister_event_lin(self):
-        tsapp_unregister_event_lin(self.LINobj, OnLINevent)
+        if 0 == tsapp_unregister_event_lin(self.LINobj, OnLINevent):
+            self.textBrowser.append("lin回调事件注销成功\r\n")
+            self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
 
     def send_can_msg(self):
         for i in range(10):
@@ -238,15 +251,15 @@ class MyWindows(QMainWindow, Ui_MainWindow):
             item = TLIBCAN()
             listcanmsg.append(item)
         size = 100
-        r, canrecSize = tsapp_receive_can_msgs(listcanmsg, size, 1, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
+        r, canrecSize = tsapp_receive_can_msgs(listcanmsg, size, 0, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
         if r == 0:
             for i in range(canrecSize.value):
                 a = ' '
                 str1 = (
-                str(listcanmsg[i].FTimeUs / 1000000), str(listcanmsg[i].FIdxChn), hex(listcanmsg[i].FIdentifier),
-                str(listcanmsg[i].FDLC), hex(listcanmsg[i].FData[0]), hex(listcanmsg[i].FData[1]),
-                hex(listcanmsg[i].FData[2]), hex(listcanmsg[i].FData[3]), hex(listcanmsg[i].FData[4]),
-                hex(listcanmsg[i].FData[5]), hex(listcanmsg[i].FData[6]), hex(listcanmsg[i].FData[7]))
+                    str(listcanmsg[i].FTimeUs / 1000000), str(listcanmsg[i].FIdxChn), hex(listcanmsg[i].FIdentifier),
+                    str(listcanmsg[i].FDLC), hex(listcanmsg[i].FData[0]), hex(listcanmsg[i].FData[1]),
+                    hex(listcanmsg[i].FData[2]), hex(listcanmsg[i].FData[3]), hex(listcanmsg[i].FData[4]),
+                    hex(listcanmsg[i].FData[5]), hex(listcanmsg[i].FData[6]), hex(listcanmsg[i].FData[7]))
                 self.textBrowser.append(a.join(str1) + "\r\n")
                 self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
         else:
@@ -258,7 +271,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
             item = TLIBCANFD()
             listcanmsg.append(item)
         size = 100
-        r, canrecSize = tsapp_receive_canfd_msgs(listcanmsg, size, 1, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
+        r, canrecSize = tsapp_receive_canfd_msgs(listcanmsg, size, 0, READ_TX_RX_DEF.ONLY_RX_MESSAGES.value)
         if r == 0:
             for i in range(canrecSize.value):
                 a = ' '
@@ -292,7 +305,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
         AReqDataArray[2] = c_uint8(0x90)
         AResSize = c_int32(100)
         AResponseDataArray = (c_uint8 * 100)()
-        r = tstp_can_request_and_get_response(self.udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize, 100)
+        r = tstp_can_request_and_get_response(self.udsHandle, AReqDataArray, 3, AResponseDataArray, AResSize)
         if r == 0:
             a = ' '
             self.textBrowser.append(a.join(hex(i) for i in AResponseDataArray[0:AResSize.value]) + "\r\n")
@@ -325,6 +338,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
                 self.tb_load_dbc.setText(filepath[filepath.rindex("/") + 1:] + "文件加载成功")
             else:
                 self.tb_load_dbc.setText("错误信息" + tsapp_get_error_description(r))
+
     def read_dbc_signal_num(self):
         r, value = tsdb_get_can_db_info(self.dbc_id, 10, 0, 0)
         if r == 0:
@@ -344,7 +358,7 @@ class MyWindows(QMainWindow, Ui_MainWindow):
         root.withdraw()
         filepath = filedialog.askopenfilename()
         if str(filepath).find(".blf"):
-            r = tslog_blf_read_start(filepath, self.blf_id,self.blf_count)
+            r = tslog_blf_read_start(filepath, self.blf_id, self.blf_count)
         if r == 0:
             self.textBrowser.append(filepath[filepath.rindex("/") + 1:] + "文件加载成功")
         else:
@@ -361,30 +375,30 @@ class MyWindows(QMainWindow, Ui_MainWindow):
             r = tslog_blf_read_object(self.blf_id, realCount, messageType, CANtemp, LINtemp, CANFDtemp)
             if messageType.value == TSupportedObjType.sotCAN.value.value:
 
-                    str1 = ("CAN",
+                str1 = ("CAN",
                         str(CANtemp.FTimeUs / 1000000), str(CANtemp.FIdxChn),
                         hex(CANtemp.FIdentifier),
                         str(CANtemp.FDLC), hex(CANtemp.FData[0]), hex(CANtemp.FData[1]),
                         hex(CANtemp.FData[2]), hex(CANtemp.FData[3]), hex(CANtemp.FData[4]),
                         hex(CANtemp.FData[5]), hex(CANtemp.FData[6]), hex(CANtemp.FData[7]))
-                    self.textBrowser.append(a.join(str1) + "\r\n")
-                    self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
+                self.textBrowser.append(a.join(str1) + "\r\n")
+                self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
             elif messageType.value == TSupportedObjType.sotCANFD.value.value:
                 str1 = ("CANFD",
-                    str(CANFDtemp.FTimeUs / 1000000), str(CANFDtemp.FIdxChn),
-                    hex(CANFDtemp.FIdentifier),
-                    str(CANFDtemp.FDLC), hex(CANFDtemp.FData[0]), hex(CANFDtemp.FData[1]),
-                    hex(CANFDtemp.FData[2]), hex(CANFDtemp.FData[3]), hex(CANFDtemp.FData[4]),
-                    hex(CANFDtemp.FData[5]), hex(CANFDtemp.FData[6]), hex(CANFDtemp.FData[7]))
+                        str(CANFDtemp.FTimeUs / 1000000), str(CANFDtemp.FIdxChn),
+                        hex(CANFDtemp.FIdentifier),
+                        str(CANFDtemp.FDLC), hex(CANFDtemp.FData[0]), hex(CANFDtemp.FData[1]),
+                        hex(CANFDtemp.FData[2]), hex(CANFDtemp.FData[3]), hex(CANFDtemp.FData[4]),
+                        hex(CANFDtemp.FData[5]), hex(CANFDtemp.FData[6]), hex(CANFDtemp.FData[7]))
                 self.textBrowser.append(a.join(str1) + "\r\n")
                 self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
             elif messageType.value == TSupportedObjType.sotLIN.value.value:
                 str1 = ("LIN",
-                    str(LINtemp.FTimeUs / 1000000), str(LINtemp.FIdxChn),
-                    hex(LINtemp.FIdentifier),
-                    str(LINtemp.FDLC), hex(LINtemp.FData[0]), hex(LINtemp.FData[1]),
-                    hex(LINtemp.FData[2]), hex(LINtemp.FData[3]), hex(LINtemp.FData[4]),
-                    hex(LINtemp.FData[5]), hex(LINtemp.FData[6]), hex(LINtemp.FData[7]))
+                        str(LINtemp.FTimeUs / 1000000), str(LINtemp.FIdxChn),
+                        hex(LINtemp.FIdentifier),
+                        str(LINtemp.FDLC), hex(LINtemp.FData[0]), hex(LINtemp.FData[1]),
+                        hex(LINtemp.FData[2]), hex(LINtemp.FData[3]), hex(LINtemp.FData[4]),
+                        hex(LINtemp.FData[5]), hex(LINtemp.FData[6]), hex(LINtemp.FData[7]))
                 self.textBrowser.append(a.join(str1) + "\r\n")
                 self.textBrowser.moveCursor(self.textBrowser.textCursor().End)
         tslog_blf_read_end(self.blf_id)
